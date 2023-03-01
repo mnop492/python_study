@@ -44,7 +44,7 @@ class Config():
         self.createTokenPwd=config.get('INFO', 'createTokenPwd')
         self.deviceId=config.get('INFO', 'deviceId')
         self.deviceName=config.get('INFO', 'deviceName')
-        self.encrypy=config.get('INFO', 'encrypy')
+        self.encrypt=config.get('INFO', 'encrypt')
         self.osVersion=config.get('INFO', 'osVersion')
         self.passwordType=config.get('INFO', 'passwordType')
         self.platform=config.get('INFO', 'platform')        

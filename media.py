@@ -2,15 +2,14 @@ import urllib
 import urllib.parse
 import urllib.request
 import http.cookiejar
-import datetime
 import socket
 import json
 import base64
 import hashlib
-import calendar
 import gzip
 import pandas as pd
 from pyDes import des, CBC, PAD_PKCS5
+from Config import Config
 # from pandas.io.json import json_normalize
 
 # proxyAddrAndPort = None
@@ -28,7 +27,9 @@ def des_encrypt_b64(secret_key, password):
     return str(base64.b64encode(en),'utf-8')
 
 def sign(data_dict):
-    SECRET = 'mx-muc5.0-sign'
+    SECRET = 'mx-muc5.0-sign' 
+    data_dict.pop('sign')
+    data_dict = dict(sorted(data_dict.items()))
     str = ""
     for key in data_dict:
         str += key
@@ -61,20 +62,11 @@ urllib.request.install_opener(opener)
 token = None
 # return None
 
-def login(account, password, sign_str):
-    secret_key = '1c38dedb'
-    encrypted_pw = des_encrypt_b64(secret_key, password)
-    # print (encrypted_pw)
-    login_dict = {'account' : account, 'appKey' : secret_key, 'appName': 'LetsLink', 'appVersion': '5.1.8', 'createTokenPwd':'1',                                     
-            'deviceId':'A6F531E4-3146-4C00-AD97-363A58D44EC8', 'deviceName':'iPhone13,2', 'encrypt':'1', 'osVersion':'16.2',
-            'password':encrypted_pw, 'passwordType':'0','platform':'1'}
-    # sign_str = sign(login_dict)
-    # # print (sign_str)
-    # sign_str = '9b320b7eff7a6dbd74c4894cdf7b5150'
-    login_dict.update({'sign':sign_str})
-
+def login(login_dict):
+    login_dict.update({'password': des_encrypt_b64(login_dict['appKey'], login_dict['password'])})
+    sign_str = sign(login_dict)
+    print(sign_str)
     login_data = urllib.parse.urlencode(login_dict)
-
     req = urllib.request.Request("https://mapsales.midea.com/muc/v5/app/emp/login", str.encode(login_data), headers)
     response = opener.open(req)
     response_body = response.read()  
@@ -141,36 +133,46 @@ def getEntity(header_id, profile_data):
     report_data = report_data['data']['line']
     return report_data
 
-def writeExcel(sale_report):
-    # df_json = pd.read_json(json.dumps(sale_report['data']))
-    # meta_col = ["actualSellingDate","approveStatus","consumerName",
-    #     "creationDate","deliveryModeMeaning","headerID","installationMeaning",
-    #     "invalidType","isNeedApproval","mobile","paymentModeMeaning","saleStatus","storeId","storeName"]
+def writeExcel(sale_report, account):
+
     meta_col = ["actualSellingDate","approveStatus","headerID","storeId","storeName"]
     df_json = pd.json_normalize(sale_report['data'],record_path=['line'], record_prefix='z_', meta=meta_col)
-    # df = pd.json_normalize(json.dumps(sale_report['data'], 'locations', ['date', 'number', 'name'], record_prefix='locations_')
     df_json = df_json.reindex(sorted(df_json.columns), axis=1)
     df_json.insert(0, 'account', account)
     df_json.insert(1, 'headerID', df_json.pop('headerID'))
-    columns=['z_gift1', 'z_gift1ID', 'z_gift1Image', 'z_gift1Qty', 
-                                    'z_gift2', 'z_gift2ID', 'z_gift2Image', 'z_gift2Qty', 'z_gift3',
-                                     'z_gift3ID', 'z_gift3Image', 'z_gift3Qty','z_productImage', 'z_remark','z_serialNumber','z_snInputTypeStatus']
 
+    columns=['account', 'headerID', 'actualSellingDate', 'approveStatus', 'storeId', 'storeName',
+              'z_approveStatus', 'z_documentNumber', 'z_lineID', 'z_price', 'z_productID', 'z_productName']
     df_copy = df_json[columns].copy()
     df_json.drop(columns=columns, inplace=True)
-    frames = [df_json, df_copy]
+    frames = [df_copy, df_json]
     df_json = pd.concat(frames)
     df_json.to_excel(account +'_DATAFILE.xlsx', index=False)
     return 0
 
 # init()
-account = 'ex_lily.hon'
-password = 'Qa7Ly4Tj4Y'
-sign_str = '9b320b7eff7a6dbd74c4894cdf7b5150'
-token = login(account, password, sign_str)
-profile = getProfile()
-first_day = datetime.date(2023, 2, 1).strftime('%Y-%m-%d')
-last_day = datetime.date(2023, 2, calendar.monthrange(2023, 2)[1]).strftime('%Y-%m-%d')
-print('first_day', first_day,'last_day',last_day)
-sale_report = getSaleReport(profile, first_day +' 00:00:00', last_day +' 23:59:59', 500)
-writeExcel(sale_report)
+config = Config('ray_config.ini')
+login_dict = { 'appKey' : config.appKey, 'appName': config.appName, 'appVersion': config.appVersion, 
+                'createTokenPwd':config.createTokenPwd, 'deviceId': config.deviceId, 
+                'deviceName': config.deviceName, 'encrypt': config.encrypt, 'osVersion':config.osVersion,
+                'passwordType': config.passwordType,'platform':config.platform}
+for login_info in config.login_info_list:
+    login_dict.update({'account':login_info['account']})
+    login_dict.update({'password': login_info['password']})
+    login_dict.update({'sign':login_info['sign']})
+
+    # account = 'ex_lily.hon'
+    # password = 'Qa7Ly4Tj4Y'
+    # sign = '9b320b7eff7a6dbd74c4894cdf7b5150'
+
+    
+    token = login(login_dict)
+    profile = getProfile()
+    # first_day = datetime.date(2023, 2, 1).strftime('%Y-%m-%d')
+    # last_day = datetime.date(2023, 2, calendar.monthrange(2023, 2)[1]).strftime('%Y-%m-%d')
+    first_day = config.startDate
+    last_day = config.endDate
+    page_size = config.size
+    print('first_day', first_day,'last_day',last_day)
+    sale_report = getSaleReport(profile, first_day +' 00:00:00', last_day +' 23:59:59', page_size)
+    writeExcel(sale_report, login_info['account'])
