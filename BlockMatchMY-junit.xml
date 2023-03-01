@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<testsuite errors="0" failures="0" name="io.cucumber.core.plugin.JUnitFormatter" skipped="0" tests="15" time="5.14">
+<testcase classname="BlockMatch MY specific test" name="E2E01 Fix-in Order matched in blockmatch and trader sends trade report to LEB" time="1.517">
+<system-out><![CDATA[Given CORE is ready.........................................................passed
+And environment variables are set...........................................passed
+And the FIX log file is located in %VM_LOG%.................................passed
+And I open connection in Newport............................................passed
+And I subscribe desk R-BLXASIA_TRPT in Newport..............................passed
+And I subscribe desk R455 in Newport........................................passed
+And I send CORE event HKCBX2-TRADING:XKLS...................................passed
+And I send CORE quotes......................................................passed
+Given I create a FIX order with name BLOCKMATCH_BUY_ORDER...................passed
+And I create a FIX order with name BLOCKMATCH_SELL_ORDER....................passed
+And I wait for BLOCKMATCH_BUY_ORDER to be accepted..........................passed
+And I wait for BLOCKMATCH_SELL_ORDER to be accepted.........................passed
+And I wait for BLOCKMATCH_BUY_ORDER to be executed..........................passed
+And I wait for BLOCKMATCH_SELL_ORDER to be executed.........................passed
+And I save the tag MATCH_BATCH_NUM value in variable MATCH_BATCH_NUM_BUY from a ROUTE_EXECUTION CORE message of BLOCKMATCH_BUY_ORDER.passed
+And I save the tag MATCH_BATCH_NUM value in variable MATCH_BATCH_NUM_SELL from a ROUTE_EXECUTION CORE message of BLOCKMATCH_SELL_ORDER.passed
+And I subscribe desk R-BLXASIA_TRPT in Newport..............................passed
+Then I see a new ticket with name RPT_BUY_TICKET in Newport with tags.......passed
+And I see a new ticket with name RPT_SELL_TICKET in Newport with tags.......passed
+And I see 1st child order of RPT_BUY_TICKET with name RPT_BUY_TICKET_CHILD is sliced with tags.passed
+And I see 1st child order of RPT_SELL_TICKET with name RPT_SELL_TICKET_CHILD is sliced with tags.passed
+And I subscribe desk R455 in Newport........................................passed
+And I see a new ticket with name MY_BUY_TICKET in Newport with tags.........passed
+And I see a new ticket with name MY_SELL_TICKET in Newport with tags........passed
+When I accept MY_BUY_TICKET in Newport......................................passed
+And I accept MY_SELL_TICKET in Newport......................................passed
+And I save an unique ID to variable CROSS_ID................................passed
+And I cross MY_BUY_TICKET and MY_SELL_TICKET in Newport and slices child order with names MY_BUY_TICKET_CHILD and MY_SELL_TICKET_CHILD with tags.passed
+And I wait for MY_SELL_TICKET_CHILD to be accepted..........................passed
+And I wait for MY_BUY_TICKET_CHILD to be accepted...........................passed
+And I wait for MY_BUY_TICKET_CHILD to be executed...........................passed
+And I wait for MY_SELL_TICKET_CHILD to be executed..........................passed
+Then I see a ROUTE_EXECUTION CORE message of RPT_BUY_TICKET with tags.......passed
+And I see a ROUTE_EXECUTION CORE message of RPT_SELL_TICKET with tags.......passed
+]]></system-out>
+</testcase>
+<testcase classname="BlockMatch MY specific test" name="E2E02 Fix-in Order matched in blockmatch and trader rejects in Malaysia desk" time="0.213">
+<system-out><![CDATA[Given CORE is ready.........................................................passed
+And environment variables are set...........................................passed
+And the FIX log file is located in %VM_LOG%.................................passed
+And I open connection in Newport............................................passed
+And I subscribe desk R-BLXASIA_TRPT in Newport..............................passed
+And I subscribe desk R455 in Newport........................................passed
+And I send CORE event HKCBX2-TRADING:XKLS...................................passed
+And I send CORE quotes......................................................passed
+Given I create a FIX order with name BLOCKMATCH_BUY_ORDER...................passed
+And I create a FIX order with name BLOCKMATCH_SELL_ORDER....................passed
+And I wait for BLOCKMATCH_BUY_ORDER to be accepted..........................passed
+And I wait for BLOCKMATCH_SELL_ORDER to be accepted.........................passed
+And I wait for BLOCKMATCH_BUY_ORDER to be executed..........................passed
+And I wait for BLOCKMATCH_SELL_ORDER to be executed.........................passed
+And I save the tag MATCH_BATCH_NUM value in variable MATCH_BATCH_NUM_BUY from a ROUTE_EXECUTION CORE message of BLOCKMATCH_BUY_ORDER.passed
+And I save the tag MATCH_BATCH_NUM value in variable MATCH_BATCH_NUM_SELL from a ROUTE_EXECUTION CORE message of BLOCKMATCH_SELL_ORDER.passed
+Then I subscribe desk R-BLXASIA_TRPT in Newport.............................passed
+And I see a new ticket with name RPT_BUY_TICKET in Newport with tags........passed
+And I see a new ticket with name RPT_SELL_TICKET in Newport with tags.......passed
+And I see 1st child order of RPT_BUY_TICKET with name RPT_BUY_TICKET_CHILD is sliced with tags.passed
+And I see 1st child order of RPT_SELL_TICKET with name RPT_SELL_TICKET_CHILD is sliced with tags.passed
+And I subscribe desk R455 in Newport........................................passed
+And I see a new ticket with name MY_BUY_TICKET in Newport with tags.........passed
+And I see a new ticket with name MY_SELL_TICKET in Newport with tags........passed
+When I reject MY_BUY_TICKET in Newport......................................passed
+And I reject MY_SELL_TICKET in Newport......................................passed
+And I see a ROUTE_ORDER_REJ CORE message of RPT_BUY_TICKET..................passed
+And I see a ROUTE_ORDER_REJ CORE message of RPT_SELL_TICKET.................passed
+]]></system-out>
+</testcase>
+<testcase classname="BlockMatch MY specific test" name="E2E03 Fix-in Order matched in blockmatch, trader cancels the ticket in Malaysia desk after accept" time="0.212">
+<system-out><![CDATA[Given CORE is ready.........................................................passed
+And environment variables are set...........................................passed
+And the FIX log file is located in %VM_LOG%.................................passed
+And I open connection in Newport............................................passed
+And I subscribe desk R-BLXASIA_TRPT in Newport..............................passed
+And I subscribe desk R455 in Newport........................................passed
+And I send CORE event HKCBX2-TRADING:XKLS...................................passed
+And I send CORE quotes......................................................passed
+Given I create a FIX order with name BLOCKMATCH_BUY_ORDER...................passed
+And I create a FIX order with name BLOCKMATCH_SELL_ORDER....................passed
+And I wait for BLOCKMATCH_BUY_ORDER to be accepted..........................passed
+And I wait for BLOCKMATCH_SELL_ORDER to be accepted.........................passed
+And I wait for BLOCKMATCH_BUY_ORDER to be executed..........................passed
+And I wait for BLOCKMATCH_SELL_ORDER to be executed.........................passed
+And I save the tag MATCH_BATCH_NUM value in variable MATCH_BATCH_NUM_BUY from a ROUTE_EXECUTION CORE message of BLOCKMATCH_BUY_ORDER.passed
+And I save the tag MATCH_BATCH_NUM value in variable MATCH_BATCH_NUM_SELL from a ROUTE_EXECUTION CORE message of BLOCKMATCH_SELL_ORDER.passed
+And I subscribe desk R-BLXASIA_TRPT in Newport..............................passed
+Then I see a new ticket with name RPT_BUY_TICKET in Newport with tags.......passed
+And I see a new ticket with name RPT_SELL_TICKET in Newport with tags.......passed
+And I see 1st child order of RPT_BUY_TICKET with name RPT_BUY_TICKET_CHILD is sliced with tags.passed
+And I see 1st child order of RPT_SELL_TICKET with name RPT_SELL_TICKET_CHILD is sliced with tags.passed
+And I subscribe desk R455 in Newport........................................passed
+And I see a new ticket with name MY_BUY_TICKET in Newport with tags.........passed
+And I see a new ticket with name MY_SELL_TICKET in Newport with tags........passed
+When I accept MY_BUY_TICKET in Newport......................................passed
+And I accept MY_SELL_TICKET in Newport......................................passed
+And I cancel MY_BUY_TICKET in Newport.......................................passed
+And I cancel MY_SELL_TICKET in Newport......................................passed
+And I see a ROUTE_CANCEL_ACK CORE message of RPT_BUY_TICKET.................passed
+And I see a ROUTE_CANCEL_ACK CORE message of RPT_SELL_TICKET................passed
+]]></system-out>
+</testcase>
+<testcase classname="BlockMatch MY specific test" name="MIN01 Blockmatch rejects day limit order if value less than USD $150,000" time="0.208">
+<system-out><![CDATA[Given CORE is ready.........................................................passed
+And environment variables are set...........................................passed
+And the FIX log file is located in %VM_LOG%.................................passed
+And I open connection in Newport............................................passed
+And I subscribe desk R-BLXASIA_TRPT in Newport..............................passed
+And I subscribe desk R455 in Newport........................................passed
+And I send CORE event HKCBX2-TRADING:XKLS...................................passed
+And I send CORE quotes......................................................passed
+When I create a FIX order with name ORDER1..................................passed
+And I wait for ORDER1 to be rejected........................................passed
+Then I see a ROUTE_ORDER_REJ CORE message of ORDER1 with tags...............passed
+]]></system-out>
+</testcase>
+<testcase classname="BlockMatch MY specific test" name="MIN01 Blockmatch rejects day limit order if value less than USD $150,000 2" time="0.106">
+<system-out><![CDATA[Given CORE is ready.........................................................passed
+And environment variables are set...........................................passed
+And the FIX log file is located in %VM_LOG%.................................passed
+And I open connection in Newport............................................passed
+And I subscribe desk R-BLXASIA_TRPT in Newport..............................passed
+And I subscribe desk R455 in Newport........................................passed
+And I send CORE event HKCBX2-TRADING:XKLS...................................passed
+And I send CORE quotes......................................................passed
+When I create a FIX order with name ORDER1..................................passed
+And I wait for ORDER1 to be rejected........................................passed
+Then I see a ROUTE_ORDER_REJ CORE message of ORDER1 with tags...............passed
+]]></system-out>
+</testcase>
+<testcase classname="BlockMatch MY specific test" name="MIN02 Blockmatch rejects mid-peg order if value less than USD $150,000" time="0.106">
+<system-out><![CDATA[Given CORE is ready.........................................................passed
+And environment variables are set...........................................passed
+And the FIX log file is located in %VM_LOG%.................................passed
+And I open connection in Newport............................................passed
+And I subscribe desk R-BLXASIA_TRPT in Newport..............................passed
+And I subscribe desk R455 in Newport........................................passed
+And I send CORE event HKCBX2-TRADING:XKLS...................................passed
+And I send CORE quotes......................................................passed
+When I create a FIX order with name ORDER1..................................passed
+And I wait for ORDER1 to be rejected........................................passed
+Then I see a ROUTE_ORDER_REJ CORE message of ORDER1 with tags...............passed
+]]></system-out>
+</testcase>
+<testcase classname="BlockMatch MY specific test" name="MIN02 Blockmatch rejects mid-peg order if value less than USD $150,000 2" time="0.106">
+<system-out><![CDATA[Given CORE is ready.........................................................passed
+And environment variables are set...........................................passed
+And the FIX log file is located in %VM_LOG%.................................passed
+And I open connection in Newport............................................passed
+And I subscribe desk R-BLXASIA_TRPT in Newport..............................passed
+And I subscribe desk R455 in Newport........................................passed
+And I send CORE event HKCBX2-TRADING:XKLS...................................passed
+And I send CORE quotes......................................................passed
+When I create a FIX order with name ORDER1..................................passed
+And I wait for ORDER1 to be rejected........................................passed
+Then I see a ROUTE_ORDER_REJ CORE message of ORDER1 with tags...............passed
+]]></system-out>
+</testcase>
+<testcase classname="BlockMatch MY specific test" name="MIN04 Blockmatch rejects conditional order if value less than USD $150,000" time="0.106">
+<system-out><![CDATA[Given CORE is ready.........................................................passed
+And environment variables are set...........................................passed
+And the FIX log file is located in %VM_LOG%.................................passed
+And I open connection in Newport............................................passed
+And I subscribe desk R-BLXASIA_TRPT in Newport..............................passed
+And I subscribe desk R455 in Newport........................................passed
+And I send CORE event HKCBX2-TRADING:XKLS...................................passed
+And I send CORE quotes......................................................passed
+When I create a FIX order with name ORDER1..................................passed
+And I wait for ORDER1 to be rejected........................................passed
+Then I see a IOI_CREATE_REJ CORE message of ORDER1 with tags................passed
+]]></system-out>
+</testcase>
+<testcase classname="BlockMatch MY specific test" name="MIN04 Blockmatch rejects conditional order if value less than USD $150,000 2" time="0.105">
+<system-out><![CDATA[Given CORE is ready.........................................................passed
+And environment variables are set...........................................passed
+And the FIX log file is located in %VM_LOG%.................................passed
+And I open connection in Newport............................................passed
+And I subscribe desk R-BLXASIA_TRPT in Newport..............................passed
+And I subscribe desk R455 in Newport........................................passed
+And I send CORE event HKCBX2-TRADING:XKLS...................................passed
+And I send CORE quotes......................................................passed
+When I create a FIX order with name ORDER1..................................passed
+And I wait for ORDER1 to be rejected........................................passed
+Then I see a IOI_CREATE_REJ CORE message of ORDER1 with tags................passed
+]]></system-out>
+</testcase>
+<testcase classname="BlockMatch MY specific test" name="MOC01 Reject MOC orders" time="0.305">
+<system-out><![CDATA[Given CORE is ready.........................................................passed
+And environment variables are set...........................................passed
+And the FIX log file is located in %VM_LOG%.................................passed
+And I open connection in Newport............................................passed
+And I subscribe desk R-BLXASIA_TRPT in Newport..............................passed
+And I subscribe desk R455 in Newport........................................passed
+And I send CORE event HKCBX2-TRADING:XKLS...................................passed
+And I send CORE quotes......................................................passed
+Given I send CORE event HKCBX2-PREOPEN:%MIC_CODE%...........................passed
+And I send CORE quotes......................................................passed
+And I create a FIX order with name ORDER1...................................passed
+When I wait for ORDER1 to be rejected.......................................passed
+Then I see a ROUTE_ORDER_REJ CORE message of ORDER1 with tags...............passed
+]]></system-out>
+</testcase>
+<testcase classname="BlockMatch MY specific test" name="MOC01 Reject MOC orders 2" time="0.406">
+<system-out><![CDATA[Given CORE is ready.........................................................passed
+And environment variables are set...........................................passed
+And the FIX log file is located in %VM_LOG%.................................passed
+And I open connection in Newport............................................passed
+And I subscribe desk R-BLXASIA_TRPT in Newport..............................passed
+And I subscribe desk R455 in Newport........................................passed
+And I send CORE event HKCBX2-TRADING:XKLS...................................passed
+And I send CORE quotes......................................................passed
+Given I send CORE event HKCBX2-PREOPEN:%MIC_CODE%...........................passed
+And I send CORE quotes......................................................passed
+And I create a FIX order with name ORDER1...................................passed
+When I wait for ORDER1 to be rejected.......................................passed
+Then I see a ROUTE_ORDER_REJ CORE message of ORDER1 with tags...............passed
+]]></system-out>
+</testcase>
+<testcase classname="BlockMatch MY specific test" name="MOC01 Reject MOC orders 3" time="0.306">
+<system-out><![CDATA[Given CORE is ready.........................................................passed
+And environment variables are set...........................................passed
+And the FIX log file is located in %VM_LOG%.................................passed
+And I open connection in Newport............................................passed
+And I subscribe desk R-BLXASIA_TRPT in Newport..............................passed
+And I subscribe desk R455 in Newport........................................passed
+And I send CORE event HKCBX2-TRADING:XKLS...................................passed
+And I send CORE quotes......................................................passed
+Given I send CORE event HKCBX2-TRADING:%MIC_CODE%...........................passed
+And I send CORE quotes......................................................passed
+And I create a FIX order with name ORDER1...................................passed
+When I wait for ORDER1 to be rejected.......................................passed
+Then I see a ROUTE_ORDER_REJ CORE message of ORDER1 with tags...............passed
+]]></system-out>
+</testcase>
+<testcase classname="BlockMatch MY specific test" name="MOC01 Reject MOC orders 4" time="0.306">
+<system-out><![CDATA[Given CORE is ready.........................................................passed
+And environment variables are set...........................................passed
+And the FIX log file is located in %VM_LOG%.................................passed
+And I open connection in Newport............................................passed
+And I subscribe desk R-BLXASIA_TRPT in Newport..............................passed
+And I subscribe desk R455 in Newport........................................passed
+And I send CORE event HKCBX2-TRADING:XKLS...................................passed
+And I send CORE quotes......................................................passed
+Given I send CORE event HKCBX2-TRADING:%MIC_CODE%...........................passed
+And I send CORE quotes......................................................passed
+And I create a FIX order with name ORDER1...................................passed
+When I wait for ORDER1 to be rejected.......................................passed
+Then I see a ROUTE_ORDER_REJ CORE message of ORDER1 with tags...............passed
+]]></system-out>
+</testcase>
+<testcase classname="BlockMatch MY specific test" name="MOC01 Reject MOC orders 5" time="0.307">
+<system-out><![CDATA[Given CORE is ready.........................................................passed
+And environment variables are set...........................................passed
+And the FIX log file is located in %VM_LOG%.................................passed
+And I open connection in Newport............................................passed
+And I subscribe desk R-BLXASIA_TRPT in Newport..............................passed
+And I subscribe desk R455 in Newport........................................passed
+And I send CORE event HKCBX2-TRADING:XKLS...................................passed
+And I send CORE quotes......................................................passed
+Given I send CORE event HKCBX2-AFTERMKT:%MIC_CODE%..........................passed
+And I send CORE quotes......................................................passed
+And I create a FIX order with name ORDER1...................................passed
+When I wait for ORDER1 to be rejected.......................................passed
+Then I see a ROUTE_ORDER_REJ CORE message of ORDER1 with tags...............passed
+]]></system-out>
+</testcase>
+<testcase classname="BlockMatch MY specific test" name="MOC01 Reject MOC orders 6" time="0.305">
+<system-out><![CDATA[Given CORE is ready.........................................................passed
+And environment variables are set...........................................passed
+And the FIX log file is located in %VM_LOG%.................................passed
+And I open connection in Newport............................................passed
+And I subscribe desk R-BLXASIA_TRPT in Newport..............................passed
+And I subscribe desk R455 in Newport........................................passed
+And I send CORE event HKCBX2-TRADING:XKLS...................................passed
+And I send CORE quotes......................................................passed
+Given I send CORE event HKCBX2-AFTERMKT:%MIC_CODE%..........................passed
+And I send CORE quotes......................................................passed
+And I create a FIX order with name ORDER1...................................passed
+When I wait for ORDER1 to be rejected.......................................passed
+Then I see a ROUTE_ORDER_REJ CORE message of ORDER1 with tags...............passed
+]]></system-out>
+</testcase>
+</testsuite>
