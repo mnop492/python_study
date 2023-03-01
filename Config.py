@@ -58,11 +58,11 @@ class Config():
         self.size=config.get('SALEREPORT', 'size')
         self.startDate=config.get('SALEREPORT', 'startDate')
         self.endDate=config.get('SALEREPORT', 'endDate')
-
-        login_list = config.get('LOGIN', 'loginInfo').split('\n')
-        print(login_list)
+        self.processLoginInfo(config.get('LOGIN', 'loginInfo'))       
                 
-        for userInfo in login_list:
+    def processLoginInfo(self, loginInfo):       
+        login_list = loginInfo.split('\n')
+        for userInfo in login_list:            
             login = {}
             userInfo_list = userInfo.split(',')
             login.update({'account':userInfo_list[0]})
