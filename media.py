@@ -16,7 +16,7 @@ login_dict = { 'appKey' : config.appKey, 'appName': config.appName, 'appVersion'
 
 df_all_user = pd.DataFrame()
 
-def getDataFrame(sale_report, account):
+def getAccountDataFrame(sale_report, account):
     meta_col = ["actualSellingDate","approveStatus","headerID","storeId","storeName"]
     df_json = pd.json_normalize(sale_report['data'],record_path=['line'], record_prefix='z_', meta=meta_col)
     df_json = df_json.reindex(sorted(df_json.columns), axis=1)
@@ -45,7 +45,7 @@ for login_info in config.login_info_list:
     page_size = config.size
     print('first_day', first_day,'last_day',last_day)
     sale_report = mediaHelper.getSaleReport(profile, first_day +' 00:00:00', last_day +' 23:59:59', page_size)
-    frames = [df_all_user, getDataFrame(sale_report, login_info['account'])]
+    frames = [df_all_user, getAccountDataFrame(sale_report, login_info['account'])]
     df_all_user = pd.concat(frames)
 
 df_all_user.to_excel('All_USER_DATAFILE.xlsx', index=False)
