@@ -42,7 +42,9 @@ timeout = 90
 socket.setdefaulttimeout(timeout)
 
 # def init():
-proxyAddrAndPort = '127.0.0.1:8888'
+# init()
+config = Config('config.ini')
+
 
 headers = {"Accept" : "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
         "User-Agent" : "com.midea.map.en/5.1.8 (iPhone; iOS 16.2; Scale/3.00)",
@@ -53,10 +55,11 @@ headers = {"Accept" : "text/html,application/xhtml+xml,application/xml;q=0.9,ima
         "Cookie": "PHPSESSID=ehlu07th5pmprrb214r4f4e2c5"
         }
 cj = http.cookiejar.CookieJar()        
-ProxyHandler = urllib.request.ProxyHandler({'http' : proxyAddrAndPort, 'https' : proxyAddrAndPort})
-if ProxyHandler==None:
+if config.enableProxy == "" or config.enableProxy == False:        
     opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
-else:
+else:    
+    proxyAddrAndPort = config.server+':'+config.port
+    ProxyHandler = urllib.request.ProxyHandler({'http' : proxyAddrAndPort, 'https' : proxyAddrAndPort})
     opener = urllib.request.build_opener(ProxyHandler, urllib.request.HTTPCookieProcessor(cj))
 urllib.request.install_opener(opener)
 token = None
@@ -64,13 +67,17 @@ token = None
 
 def login(login_dict):
     login_dict.update({'password': des_encrypt_b64(login_dict['appKey'], login_dict['password'])})
-    sign_str = sign(login_dict)
-    print(sign_str)
+    # sign_str = sign(login_dict)
+    # print(sign_str)
     login_data = urllib.parse.urlencode(login_dict)
     req = urllib.request.Request("https://mapsales.midea.com/muc/v5/app/emp/login", str.encode(login_data), headers)
     response = opener.open(req)
     response_body = response.read()  
-    response_body = gzip.decompress(response_body)
+    try : 
+        response_body = gzip.decompress(response_body) 
+    except Exception as e :
+        print("Caught it!")
+    
     response_body = response_body.decode("utf-8")
     response_json = json.loads(response_body)    
     return response_json['data']['accessToken']
@@ -84,7 +91,10 @@ def getProfile():
     req = urllib.request.Request(url, json.dumps(data).encode('utf8'), json_header)
     response = opener.open(req)
     response_body = response.read()  
-    response_body = gzip.decompress(response_body)
+    try : 
+        response_body = gzip.decompress(response_body) 
+    except Exception as e :
+        print("Caught it!")
     response_body = response_body.decode("utf-8") 
     profile_data = json.loads(response_body)
     profile_data = profile_data['data']['profile']
@@ -105,7 +115,10 @@ def getSaleReport(profile_data, startDate, endDate, pageSize):
     req = urllib.request.Request(url, json.dumps(data).encode('utf8'), json_header)
     response = opener.open(req)
     response_body = response.read()  
-    response_body = gzip.decompress(response_body)
+    try : 
+        response_body = gzip.decompress(response_body) 
+    except Exception as e :
+        print("Caught it!")
     response_body = response_body.decode("utf-8")  
     report_data = json.loads(response_body)
     data_json = report_data['data']
@@ -127,13 +140,16 @@ def getEntity(header_id, profile_data):
     req = urllib.request.Request(url, json.dumps(data).encode('utf8'), json_header)
     response = opener.open(req)
     response_body = response.read()  
-    response_body = gzip.decompress(response_body)
+    try : 
+        response_body = gzip.decompress(response_body) 
+    except Exception as e :
+        print("Caught it!")
     response_body = response_body.decode("utf-8")
     report_data = json.loads(response_body)    
     report_data = report_data['data']['line']
     return report_data
 
-def writeExcel(sale_report, account):
+def getDataFrame(sale_report, account):
 
     meta_col = ["actualSellingDate","approveStatus","headerID","storeId","storeName"]
     df_json = pd.json_normalize(sale_report['data'],record_path=['line'], record_prefix='z_', meta=meta_col)
@@ -141,21 +157,30 @@ def writeExcel(sale_report, account):
     df_json.insert(0, 'account', account)
     df_json.insert(1, 'headerID', df_json.pop('headerID'))
 
-    columns=['account', 'headerID', 'actualSellingDate', 'approveStatus', 'storeId', 'storeName',
-              'z_approveStatus', 'z_documentNumber', 'z_lineID', 'z_price', 'z_productID', 'z_productName']
-    df_copy = df_json[columns].copy()
-    df_json.drop(columns=columns, inplace=True)
-    frames = [df_copy, df_json]
-    df_json = pd.concat(frames)
-    df_json.to_excel(account +'_DATAFILE.xlsx', index=False)
-    return 0
+    columns_prefix=['account', 'headerID', 'actualSellingDate', 'approveStatus', 'storeId', 'storeName',
+              'z_approveStatus', 'z_documentNumber', 'z_lineID', 'z_price', 'z_productID', 'z_productName','z_qty', 'z_snInputTypeStatus']
+    columns = df_json.columns.tolist()
+    for item in columns_prefix:
+        if item in columns:
+            columns.remove(item)    
+    columns = columns_prefix + columns
+    df_json = df_json[columns]
+    # df_copy = df_json[columns].copy()
+    # df_json.drop(columns=columns, inplace=True)
+    # frames = [df_copy, df_json]
+    # df_json = pd.concat(frames)
+    # df_json.to_excel(account +'_DATAFILE.xlsx', index=False)
+    return df_json
 
-# init()
-config = Config('ray_config.ini')
+
+
 login_dict = { 'appKey' : config.appKey, 'appName': config.appName, 'appVersion': config.appVersion, 
                 'createTokenPwd':config.createTokenPwd, 'deviceId': config.deviceId, 
                 'deviceName': config.deviceName, 'encrypt': config.encrypt, 'osVersion':config.osVersion,
                 'passwordType': config.passwordType,'platform':config.platform}
+
+df_all_user = pd.DataFrame()
+
 for login_info in config.login_info_list:
     login_dict.update({'account':login_info['account']})
     login_dict.update({'password': login_info['password']})
@@ -175,4 +200,7 @@ for login_info in config.login_info_list:
     page_size = config.size
     print('first_day', first_day,'last_day',last_day)
     sale_report = getSaleReport(profile, first_day +' 00:00:00', last_day +' 23:59:59', page_size)
-    writeExcel(sale_report, login_info['account'])
+    frames = [df_all_user, getDataFrame(sale_report, login_info['account'])]
+    df_all_user = pd.concat(frames)
+
+df_all_user.to_excel('All_USER_DATAFILE.xlsx', index=False)
