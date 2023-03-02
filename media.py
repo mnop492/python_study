@@ -69,6 +69,9 @@ def login(login_dict):
     login_dict.update({'password': des_encrypt_b64(login_dict['appKey'], login_dict['password'])})
     # sign_str = sign(login_dict)
     # print(sign_str)
+    if 'Content-Type' in headers:
+        headers.pop('Content-Type')
+        
     login_data = urllib.parse.urlencode(login_dict)
     req = urllib.request.Request("https://mapsales.midea.com/muc/v5/app/emp/login", str.encode(login_data), headers)
     response = opener.open(req)
