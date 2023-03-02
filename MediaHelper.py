@@ -12,7 +12,7 @@ from Config import Config
 
 class MediaHelper():
     # timeout in seconds
-    timeout = 90
+    timeout = 30
     socket.setdefaulttimeout(timeout)   
     headers = {"Accept" : "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
         "User-Agent" : "com.midea.map.en/5.1.8 (iPhone; iOS 16.2; Scale/3.00)",
@@ -60,6 +60,7 @@ class MediaHelper():
         return md5
         
     def login(self, login_dict):
+        login_dict = login_dict.copy()
         login_dict.update({'password': self.des_encrypt_b64(login_dict['appKey'], login_dict['password'])})
         # sign_str = sign(login_dict)
         # print(sign_str)
@@ -71,7 +72,7 @@ class MediaHelper():
         try : 
             response_body = gzip.decompress(response_body) 
         except Exception as e :
-            print("Caught it!")
+            print("Not a GZIP file")
         
         response_body = response_body.decode("utf-8")
         response_json = json.loads(response_body)    
@@ -88,7 +89,7 @@ class MediaHelper():
         try : 
             response_body = gzip.decompress(response_body) 
         except Exception as e :
-            print("Caught it!")
+            print("Not a GZIP file")
         response_body = response_body.decode("utf-8") 
         profile_data = json.loads(response_body)
         profile_data = profile_data['data']['profile']
@@ -131,7 +132,7 @@ class MediaHelper():
         try : 
             response_body = gzip.decompress(response_body) 
         except Exception as e :
-            print("Caught it!")
+            print("Not a GZIP file")
         response_body = response_body.decode("utf-8")
         report_data = json.loads(response_body)    
         report_data = report_data['data']['line']
