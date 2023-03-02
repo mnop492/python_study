@@ -54,6 +54,9 @@ headers = {"Accept" : "text/html,application/xhtml+xml,application/xml;q=0.9,ima
         "Upgrade-Insecure-Requests" : "1",
         "Cookie": "PHPSESSID=ehlu07th5pmprrb214r4f4e2c5"
         }
+json_header = headers.copy()
+json_header.update({'Content-Type':'application/json'})
+
 cj = http.cookiejar.CookieJar()        
 if config.enableProxy == "" or config.enableProxy == False:        
     opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
@@ -69,8 +72,6 @@ def login(login_dict):
     login_dict.update({'password': des_encrypt_b64(login_dict['appKey'], login_dict['password'])})
     # sign_str = sign(login_dict)
     # print(sign_str)
-    if 'Content-Type' in headers:
-        headers.pop('Content-Type')
         
     login_data = urllib.parse.urlencode(login_dict)
     req = urllib.request.Request("https://mapsales.midea.com/muc/v5/app/emp/login", str.encode(login_data), headers)
@@ -86,8 +87,6 @@ def login(login_dict):
     return response_json['data']['accessToken']
 
 def getProfile():
-    json_header = headers
-    json_header.update({'Content-Type':'application/json'})
     url = "https://irms.midea.com:8080/isales/basis/profile"
     data = {"token":token,"language":"en","isApp":1,"appVersion":"5.0"}
 
@@ -106,8 +105,6 @@ def getProfile():
     return profile_data
  
 def getSaleReport(profile_data, startDate, endDate, pageSize):
-    json_header = headers
-    json_header.update({'Content-Type':'application/json'})
     url = "https://irms.midea.com:8080/isales/app/v1/salesReportHeader/query"
     data = {'__page':1,'__pagesize':pageSize, 'approveStatus':'', 'conditions':'','saleStatus':''}
     data.update({'startDate':startDate})
@@ -121,23 +118,19 @@ def getSaleReport(profile_data, startDate, endDate, pageSize):
     try : 
         response_body = gzip.decompress(response_body) 
     except Exception as e :
-        print("Caught it!")
+        print("Not a GZIP file")
     response_body = response_body.decode("utf-8")  
     report_data = json.loads(response_body)
     data_json = report_data['data']
     header_id = None
     for obj in data_json:
         header_id = obj['headerID']
-        # print(header_id)
         obj['line'] = getEntity(header_id, profile_data)
 
     
     return report_data
-    # return response_body
 
 def getEntity(header_id, profile_data):
-    json_header = headers
-    json_header.update({'Content-Type':'application/json'})
     url = "https://irms.midea.com:8080/isales/app/v1/salesReportHeader/getentity"
     data = {'headerID':header_id,'profile':profile_data}
     req = urllib.request.Request(url, json.dumps(data).encode('utf8'), json_header)
@@ -168,11 +161,6 @@ def getDataFrame(sale_report, account):
             columns.remove(item)    
     columns = columns_prefix + columns
     df_json = df_json[columns]
-    # df_copy = df_json[columns].copy()
-    # df_json.drop(columns=columns, inplace=True)
-    # frames = [df_copy, df_json]
-    # df_json = pd.concat(frames)
-    # df_json.to_excel(account +'_DATAFILE.xlsx', index=False)
     return df_json
 
 
@@ -188,16 +176,9 @@ for login_info in config.login_info_list:
     login_dict.update({'account':login_info['account']})
     login_dict.update({'password': login_info['password']})
     login_dict.update({'sign':login_info['sign']})
-
-    # account = 'ex_lily.hon'
-    # password = 'Qa7Ly4Tj4Y'
-    # sign = '9b320b7eff7a6dbd74c4894cdf7b5150'
-
     
     token = login(login_dict)
     profile = getProfile()
-    # first_day = datetime.date(2023, 2, 1).strftime('%Y-%m-%d')
-    # last_day = datetime.date(2023, 2, calendar.monthrange(2023, 2)[1]).strftime('%Y-%m-%d')
     first_day = config.startDate
     last_day = config.endDate
     page_size = config.size
