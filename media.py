@@ -18,13 +18,12 @@ login_dict = { 'appKey' : config.appKey, 'appName': config.appName, 'appVersion'
 
 df_all_user = pd.DataFrame()
 
-def getDataFrameByAccount(sale_report, account):
-    meta_col = ["actualSellingDate","approveStatus","headerID","storeId","storeName"]
-    df_json = pd.json_normalize(sale_report['data'],record_path=['line'], record_prefix='z_', meta=meta_col)
-    df_json = df_json.reindex(sorted(df_json.columns), axis=1)
-    df_json.insert(0, 'account', account)
-    df_json.insert(1, 'headerID', df_json.pop('headerID'))
-
+def reindexSaleReportDataFrame(df_json):
+    try:
+        df_json.insert(1, 'headerID', df_json.pop('headerID'))
+    except TypeError:
+        return df_json 
+    
     columns_prefix=['account', 'headerID', 'actualSellingDate', 'approveStatus', 'storeId', 'storeName',
             'z_approveStatus', 'z_documentNumber', 'z_lineID', 'z_price', 'z_productID', 'z_productName','z_qty', 'z_snInputTypeStatus']
     columns = df_json.columns.tolist()
@@ -35,13 +34,22 @@ def getDataFrameByAccount(sale_report, account):
     df_json = df_json[columns]
     return df_json
 
+def getDataFrameByAccount(sale_report, account):
+    meta_col = ["actualSellingDate","approveStatus","headerID","storeId","storeName"]
+    df_json = pd.json_normalize(sale_report['data'],record_path=['line'], record_prefix='z_', meta=meta_col)
+    df_json = df_json.reindex(sorted(df_json.columns), axis=1)
+    df_json.insert(0, 'account', account)        
+    return df_json
+
 def getSaleReport(profile):    
     first_day = config.startDate
     last_day = config.endDate
     page_size = config.size
-    # print('first_day', first_day,'last_day',last_day)
     sale_report = mediaHelper.getSaleReport(profile, first_day +' 00:00:00', last_day +' 23:59:59', page_size)
-    print(profile['__userName'], 'successfully get sale report from', first_day, 'to', last_day)
+    if sale_report['data']:        
+        print(profile['__userName'], 'successfully get sale report from', first_day, 'to', last_day)        
+    else:
+        print(profile['__userName'], 'has no record from', first_day, 'to', last_day)
     return sale_report
 
 def startProcess(login_dict):
@@ -72,4 +80,5 @@ for login_info in config.login_info_list:
     # print('Wait', sleeptime, 'seconds to get next account sale report!')
     # time.sleep(sleeptime)
 
+df_all_user = reindexSaleReportDataFrame(df_all_user)
 df_all_user.to_excel('All_USER_DATAFILE.xlsx', index=False)
