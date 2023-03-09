@@ -1,9 +1,9 @@
 import socket
 import time
-import random
 import pandas as pd
 from Config import Config
 from MediaHelper import MediaHelper
+from UserInfo import UserInfo
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -18,7 +18,10 @@ login_dict = { 'appKey' : config.appKey, 'appName': config.appName, 'appVersion'
                 'deviceName': config.deviceName, 'encrypt': config.encrypt, 'osVersion':config.osVersion,
                 'passwordType': config.passwordType,'platform':config.platform}
 
-df_all_user = pd.DataFrame()
+df_all_user_saleReport = pd.DataFrame()
+df_all_user_profileReport = pd.DataFrame()
+userInfoDict={}
+
 
 def reindexSaleReportDataFrame(df_json):
     try:
@@ -37,13 +40,6 @@ def reindexSaleReportDataFrame(df_json):
     df_json = df_json[columns]
     return df_json
 
-def getDataFrameByAccount(sale_report, account):
-    meta_col = ["actualSellingDate","approveStatus","headerID","storeId","storeName"]
-    df_json = pd.json_normalize(sale_report['data'],record_path=['line'], record_prefix='z_', meta=meta_col)
-    df_json = df_json.reindex(sorted(df_json.columns), axis=1)
-    df_json.insert(0, 'account', account)        
-    return df_json
-
 def getSaleReport(profile):    
     first_day = config.startDate
     last_day = config.endDate
@@ -56,32 +52,38 @@ def getSaleReport(profile):
     return sale_report
 
 def startProcess(login_dict):
-    sale_report = None
     sleeptime = 5
+    userInfo = UserInfo(login_dict['account'])
     while True :
         try:
             mediaHelper.login(login_dict)
-            profile = mediaHelper.getProfile()
-            sale_report = getSaleReport(profile)
+            userInfo.profile = mediaHelper.getProfile()
+            userInfo.saleReport = getSaleReport(userInfo.profile)
+            userInfo.token = mediaHelper.token
         except Exception as err:              
-            print (login_dict['account'], 'fail to get sale report.', 'Wait', sleeptime, 'seconds to retry!')   
+            print(userInfo.account, 'fail to get sale report.', 'Wait', sleeptime, 'seconds to retry!')   
             time.sleep(sleeptime)  
             sleeptime += 5
             continue   
         break
-    return sale_report
+    return userInfo
 
 for login_info in config.login_info_list:
     login_dict.update({'account':login_info['account']})
     login_dict.update({'password': login_info['password']})
     login_dict.update({'sign':login_info['sign']})
-    sale_report = startProcess(login_dict)    
+    userInfo = startProcess(login_dict)    
     
-    frames = [df_all_user, getDataFrameByAccount(sale_report, login_info['account'])]
-    df_all_user = pd.concat(frames)
+    frames = [df_all_user_saleReport, userInfo.getSaleReportDataFrame()]
+    df_all_user_saleReport = pd.concat(frames)
+    frames = [df_all_user_profileReport, userInfo.getProfileReportDataFrame()]
+    df_all_user_profileReport = pd.concat(frames)
+    userInfoDict.update({userInfo.account: userInfo})
     # sleeptime = 5 + random.randint(1,4)
     # print('Wait', sleeptime, 'seconds to get next account sale report!')
     # time.sleep(sleeptime)
 
-df_all_user = reindexSaleReportDataFrame(df_all_user)
-df_all_user.to_excel('All_USER_DATAFILE.xlsx', index=False)
+df_all_user_saleReport = reindexSaleReportDataFrame(df_all_user_saleReport)
+df_all_user_saleReport.to_excel('All_USER_SALEREPORT.xlsx', index=False)
+# df_all_user_profileReport = reindexSaleReportDataFrame(df_all_user_profileReport)
+df_all_user_profileReport.to_excel('All_USER_PROFILE.xlsx', index=False)
