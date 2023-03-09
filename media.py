@@ -1,181 +1,15 @@
-import urllib
-import urllib.parse
-import urllib.request
-import http.cookiejar
 import socket
-import json
-import base64
-import hashlib
-import gzip
+import time
+import random
 import pandas as pd
-from pyDes import des, CBC, PAD_PKCS5
 from Config import Config
-# from pandas.io.json import json_normalize
+from MediaHelper import MediaHelper
 
-# proxyAddrAndPort = None
-# headers = None
-# cj = None        
-# ProxyHandler = None
-# opener = None
+timeout = 30
+socket.setdefaulttimeout(timeout) 
 
-def des_encrypt_b64(secret_key, password):
-    bArr = [1, 2, 3, 4, 5, 6, 7, 8]
-    input_text = password
-    iv = bytearray(bArr)
-    k = des(secret_key, CBC, iv, pad=None, padmode=PAD_PKCS5)
-    en = k.encrypt(input_text, padmode=PAD_PKCS5)
-    return str(base64.b64encode(en),'utf-8')
-
-def sign(data_dict):
-    SECRET = 'mx-muc5.0-sign' 
-    data_dict.pop('sign')
-    data_dict = dict(sorted(data_dict.items()))
-    str = ""
-    for key in data_dict:
-        str += key
-        str += data_dict[key]        
-    md5 = hashlib.md5((SECRET + str +SECRET).encode("utf8")).hexdigest()   
-    return md5
-
-# timeout in seconds
-timeout = 90
-socket.setdefaulttimeout(timeout)
-
-# def init():
-# init()
 config = Config('config.ini')
-
-
-headers = {"Accept" : "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "User-Agent" : "com.midea.map.en/5.1.8 (iPhone; iOS 16.2; Scale/3.00)",
-        "Accept-Encoding" : "gzip, deflate, br",
-        "Accept-Language" : "zh-Hant-HK;q=1, yue-Hant-HK;q=0.9, en-GB;q=0.8, ja-HK;q=0.7, zh-Hans-HK;q=0.6",
-        "X-Requested-With" : "com.mannings.app",
-        "Upgrade-Insecure-Requests" : "1",
-        "Cookie": "PHPSESSID=ehlu07th5pmprrb214r4f4e2c5"
-        }
-cj = http.cookiejar.CookieJar()        
-if config.enableProxy == "" or config.enableProxy == False:        
-    opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
-else:    
-    proxyAddrAndPort = config.server+':'+config.port
-    ProxyHandler = urllib.request.ProxyHandler({'http' : proxyAddrAndPort, 'https' : proxyAddrAndPort})
-    opener = urllib.request.build_opener(ProxyHandler, urllib.request.HTTPCookieProcessor(cj))
-urllib.request.install_opener(opener)
-token = None
-# return None
-
-def login(login_dict):
-    login_dict.update({'password': des_encrypt_b64(login_dict['appKey'], login_dict['password'])})
-    # sign_str = sign(login_dict)
-    # print(sign_str)
-    if 'Content-Type' in headers:
-        headers.pop('Content-Type')
-        
-    login_data = urllib.parse.urlencode(login_dict)
-    req = urllib.request.Request("https://mapsales.midea.com/muc/v5/app/emp/login", str.encode(login_data), headers)
-    response = opener.open(req)
-    response_body = response.read()  
-    try : 
-        response_body = gzip.decompress(response_body) 
-    except Exception as e :
-        print("Caught it!")
-    
-    response_body = response_body.decode("utf-8")
-    response_json = json.loads(response_body)    
-    return response_json['data']['accessToken']
-
-def getProfile():
-    json_header = headers
-    json_header.update({'Content-Type':'application/json'})
-    url = "https://irms.midea.com:8080/isales/basis/profile"
-    data = {"token":token,"language":"en","isApp":1,"appVersion":"5.0"}
-
-    req = urllib.request.Request(url, json.dumps(data).encode('utf8'), json_header)
-    response = opener.open(req)
-    response_body = response.read()  
-    try : 
-        response_body = gzip.decompress(response_body) 
-    except Exception as e :
-        print("Caught it!")
-    response_body = response_body.decode("utf-8") 
-    profile_data = json.loads(response_body)
-    profile_data = profile_data['data']['profile']
-    profile_data.update({'__appVersion': "5.0"})
-    profile_data.update({'__isApp': 1})
-    return profile_data
- 
-def getSaleReport(profile_data, startDate, endDate, pageSize):
-    json_header = headers
-    json_header.update({'Content-Type':'application/json'})
-    url = "https://irms.midea.com:8080/isales/app/v1/salesReportHeader/query"
-    data = {'__page':1,'__pagesize':pageSize, 'approveStatus':'', 'conditions':'','saleStatus':''}
-    data.update({'startDate':startDate})
-    data.update({'endDate':endDate})    
-    data.update({'profile':profile_data})
-    data.update({'promoterID':profile_data['__promoterId']})
-
-    req = urllib.request.Request(url, json.dumps(data).encode('utf8'), json_header)
-    response = opener.open(req)
-    response_body = response.read()  
-    try : 
-        response_body = gzip.decompress(response_body) 
-    except Exception as e :
-        print("Caught it!")
-    response_body = response_body.decode("utf-8")  
-    report_data = json.loads(response_body)
-    data_json = report_data['data']
-    header_id = None
-    for obj in data_json:
-        header_id = obj['headerID']
-        # print(header_id)
-        obj['line'] = getEntity(header_id, profile_data)
-
-    
-    return report_data
-    # return response_body
-
-def getEntity(header_id, profile_data):
-    json_header = headers
-    json_header.update({'Content-Type':'application/json'})
-    url = "https://irms.midea.com:8080/isales/app/v1/salesReportHeader/getentity"
-    data = {'headerID':header_id,'profile':profile_data}
-    req = urllib.request.Request(url, json.dumps(data).encode('utf8'), json_header)
-    response = opener.open(req)
-    response_body = response.read()  
-    try : 
-        response_body = gzip.decompress(response_body) 
-    except Exception as e :
-        print("Caught it!")
-    response_body = response_body.decode("utf-8")
-    report_data = json.loads(response_body)    
-    report_data = report_data['data']['line']
-    return report_data
-
-def getDataFrame(sale_report, account):
-
-    meta_col = ["actualSellingDate","approveStatus","headerID","storeId","storeName"]
-    df_json = pd.json_normalize(sale_report['data'],record_path=['line'], record_prefix='z_', meta=meta_col)
-    df_json = df_json.reindex(sorted(df_json.columns), axis=1)
-    df_json.insert(0, 'account', account)
-    df_json.insert(1, 'headerID', df_json.pop('headerID'))
-
-    columns_prefix=['account', 'headerID', 'actualSellingDate', 'approveStatus', 'storeId', 'storeName',
-              'z_approveStatus', 'z_documentNumber', 'z_lineID', 'z_price', 'z_productID', 'z_productName','z_qty', 'z_snInputTypeStatus']
-    columns = df_json.columns.tolist()
-    for item in columns_prefix:
-        if item in columns:
-            columns.remove(item)    
-    columns = columns_prefix + columns
-    df_json = df_json[columns]
-    # df_copy = df_json[columns].copy()
-    # df_json.drop(columns=columns, inplace=True)
-    # frames = [df_copy, df_json]
-    # df_json = pd.concat(frames)
-    # df_json.to_excel(account +'_DATAFILE.xlsx', index=False)
-    return df_json
-
-
+mediaHelper = MediaHelper(config)
 
 login_dict = { 'appKey' : config.appKey, 'appName': config.appName, 'appVersion': config.appVersion, 
                 'createTokenPwd':config.createTokenPwd, 'deviceId': config.deviceId, 
@@ -184,26 +18,67 @@ login_dict = { 'appKey' : config.appKey, 'appName': config.appName, 'appVersion'
 
 df_all_user = pd.DataFrame()
 
+def reindexSaleReportDataFrame(df_json):
+    try:
+        df_json.insert(1, 'headerID', df_json.pop('headerID'))
+    except TypeError:
+        return df_json 
+    
+    columns_prefix=['account', 'headerID', 'actualSellingDate', 'approveStatus', 'storeId', 'storeName',
+            'z_approveStatus', 'z_documentNumber', 'z_lineID', 'z_price', 'z_productID', 'z_productName','z_qty', 'z_snInputTypeStatus']
+    columns = df_json.columns.tolist()
+    for item in columns_prefix:
+        if item in columns:
+            columns.remove(item)    
+    columns = columns_prefix + columns
+    df_json = df_json[columns]
+    return df_json
+
+def getDataFrameByAccount(sale_report, account):
+    meta_col = ["actualSellingDate","approveStatus","headerID","storeId","storeName"]
+    df_json = pd.json_normalize(sale_report['data'],record_path=['line'], record_prefix='z_', meta=meta_col)
+    df_json = df_json.reindex(sorted(df_json.columns), axis=1)
+    df_json.insert(0, 'account', account)        
+    return df_json
+
+def getSaleReport(profile):    
+    first_day = config.startDate
+    last_day = config.endDate
+    page_size = config.size
+    sale_report = mediaHelper.getSaleReport(profile, first_day +' 00:00:00', last_day +' 23:59:59', page_size)
+    if sale_report['data']:        
+        print(profile['__userName'], 'successfully get sale report from', first_day, 'to', last_day)        
+    else:
+        print(profile['__userName'], 'has no record from', first_day, 'to', last_day)
+    return sale_report
+
+def startProcess(login_dict):
+    sale_report = None
+    sleeptime = 5
+    while True :
+        try:
+            mediaHelper.login(login_dict)
+            profile = mediaHelper.getProfile()
+            sale_report = getSaleReport(profile)
+        except Exception as err:              
+            print (login_dict['account'], 'fail get sale report.', 'Wait', sleeptime, 'seconds to retry!')   
+            time.sleep(sleeptime)  
+            sleeptime += 5
+            continue   
+        break
+    return sale_report
+
 for login_info in config.login_info_list:
     login_dict.update({'account':login_info['account']})
     login_dict.update({'password': login_info['password']})
     login_dict.update({'sign':login_info['sign']})
-
-    # account = 'ex_lily.hon'
-    # password = 'Qa7Ly4Tj4Y'
-    # sign = '9b320b7eff7a6dbd74c4894cdf7b5150'
-
+    sale_report = startProcess(login_dict)    
     
-    token = login(login_dict)
-    profile = getProfile()
-    # first_day = datetime.date(2023, 2, 1).strftime('%Y-%m-%d')
-    # last_day = datetime.date(2023, 2, calendar.monthrange(2023, 2)[1]).strftime('%Y-%m-%d')
-    first_day = config.startDate
-    last_day = config.endDate
-    page_size = config.size
-    print('first_day', first_day,'last_day',last_day)
-    sale_report = getSaleReport(profile, first_day +' 00:00:00', last_day +' 23:59:59', page_size)
-    frames = [df_all_user, getDataFrame(sale_report, login_info['account'])]
+    frames = [df_all_user, getDataFrameByAccount(sale_report, login_info['account'])]
     df_all_user = pd.concat(frames)
+    # sleeptime = 5 + random.randint(1,4)
+    # print('Wait', sleeptime, 'seconds to get next account sale report!')
+    # time.sleep(sleeptime)
 
+df_all_user = reindexSaleReportDataFrame(df_all_user)
 df_all_user.to_excel('All_USER_DATAFILE.xlsx', index=False)
