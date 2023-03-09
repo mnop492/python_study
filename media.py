@@ -20,6 +20,7 @@ login_dict = { 'appKey' : config.appKey, 'appName': config.appName, 'appVersion'
 
 df_all_user_saleReport = pd.DataFrame()
 df_all_user_profileReport = pd.DataFrame()
+df_all_user_productReport = pd.DataFrame()
 userInfoDict={}
 
 
@@ -59,6 +60,8 @@ def startProcess(login_dict):
             mediaHelper.login(login_dict)
             userInfo.profile = mediaHelper.getProfile()
             userInfo.saleReport = getSaleReport(userInfo.profile)
+            if df_all_user_productReport.size==0:
+                userInfo.product = mediaHelper.getProduct(userInfo.profile)
             userInfo.token = mediaHelper.token
         except Exception as err:              
             print(userInfo.account, 'fail to get sale report.', 'Wait', sleeptime, 'seconds to retry!')   
@@ -78,6 +81,9 @@ for login_info in config.login_info_list:
     df_all_user_saleReport = pd.concat(frames)
     frames = [df_all_user_profileReport, userInfo.getProfileReportDataFrame()]
     df_all_user_profileReport = pd.concat(frames)
+    if df_all_user_productReport.size==0:
+        frames = [df_all_user_productReport, userInfo.getProductReportDataFrame()]
+        df_all_user_productReport = pd.concat(frames)
     userInfoDict.update({userInfo.account: userInfo})
     # sleeptime = 5 + random.randint(1,4)
     # print('Wait', sleeptime, 'seconds to get next account sale report!')
@@ -85,5 +91,5 @@ for login_info in config.login_info_list:
 
 df_all_user_saleReport = reindexSaleReportDataFrame(df_all_user_saleReport)
 df_all_user_saleReport.to_excel('All_USER_SALEREPORT.xlsx', index=False)
-# df_all_user_profileReport = reindexSaleReportDataFrame(df_all_user_profileReport)
 df_all_user_profileReport.to_excel('All_USER_PROFILE.xlsx', index=False)
+df_all_user_productReport.to_excel('All_USER_PRODUCT.xlsx', index=False)

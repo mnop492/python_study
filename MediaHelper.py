@@ -136,4 +136,21 @@ class MediaHelper():
         response_body = response_body.decode("utf-8")
         report_data = json.loads(response_body)    
         report_data = report_data['data']['line']
-        return report_data    
+        return report_data 
+
+    def getProduct(self, profile_data):
+        url = "https://irms.midea.com:8080/isales/basis/item/app/v1/query"
+        data = {'__page':'','__pagesize':'','companyId=106539':106539,
+                'itemType':'Product','itemNumber':'',
+                'profile':profile_data}
+        req = urllib.request.Request(url, json.dumps(data).encode('utf8'), self.json_header)
+        response = self.opener.open(req)
+        response_body = response.read()  
+        try : 
+            response_body = gzip.decompress(response_body) 
+        except Exception as e :
+            print("Not a GZIP file")
+        response_body = response_body.decode("utf-8")
+        report_data = json.loads(response_body)    
+        report_data = report_data['data']
+        return report_data   

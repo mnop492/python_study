@@ -5,6 +5,7 @@ class UserInfo():
     saleReport = None
     token = None
     account = None
+    product = None
     def __init__(self, account, profile, saleReport, token):
         self.account = account
         self.profile = profile
@@ -24,5 +25,12 @@ class UserInfo():
     def getProfileReportDataFrame(self):
         df_json = pd.json_normalize(self.profile['__promoterStoreMapList'])
         df_json.insert(0, 'account', self.account)
-        df_json.insert(1, 'promoterId', self.profile['__promoterId'])                
+        df_json.insert(1, 'promoterId', self.profile['__promoterId'])       
+        df_json.insert(2, 'companyId', self.profile['__companyId'])          
+        return df_json
+    
+    def getProductReportDataFrame(self):
+        df_json = pd.json_normalize(self.product)
+        df_json.insert(0, 'account', self.account)      
+        df_json.insert(1, 'companyId', self.profile['__companyId'])          
         return df_json
