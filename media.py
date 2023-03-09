@@ -24,6 +24,7 @@ def reindexSaleReportDataFrame(df_json):
     try:
         df_json.insert(1, 'headerID', df_json.pop('headerID'))
     except TypeError:
+        print ('Fail to reindex sale report data frame.')
         return df_json 
     
     columns_prefix=['account', 'headerID', 'actualSellingDate', 'approveStatus', 'storeId', 'storeName',
@@ -63,7 +64,7 @@ def startProcess(login_dict):
             profile = mediaHelper.getProfile()
             sale_report = getSaleReport(profile)
         except Exception as err:              
-            print (login_dict['account'], 'fail get sale report.', 'Wait', sleeptime, 'seconds to retry!')   
+            print (login_dict['account'], 'fail to get sale report.', 'Wait', sleeptime, 'seconds to retry!')   
             time.sleep(sleeptime)  
             sleeptime += 5
             continue   
