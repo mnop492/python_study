@@ -4,6 +4,8 @@ import random
 import pandas as pd
 from Config import Config
 from MediaHelper import MediaHelper
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
 
 timeout = 30
 socket.setdefaulttimeout(timeout) 
