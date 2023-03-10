@@ -119,7 +119,6 @@ class MediaHelper():
         for obj in data_json:
             header_id = obj['headerID']
             obj['line'] = self.getEntity(header_id, profile_data)
-
         
         return report_data
 
@@ -138,9 +137,9 @@ class MediaHelper():
         report_data = report_data['data']['line']
         return report_data 
 
-    def getProduct(self, profile_data):
+    def getProduct(self, profile_data, companyId):
         url = "https://irms.midea.com:8080/isales/basis/item/app/v1/query"
-        data = {'__page':'','__pagesize':'','companyId=106539':106539,
+        data = {'__page':'','__pagesize':'','companyId':companyId,
                 'itemType':'Product','itemNumber':'',
                 'profile':profile_data}
         req = urllib.request.Request(url, json.dumps(data).encode('utf8'), self.json_header)
@@ -154,3 +153,28 @@ class MediaHelper():
         report_data = json.loads(response_body)    
         report_data = report_data['data']
         return report_data   
+    
+    def insertSaleRecord(self, profile_data, companyId, saleRecord):
+        url = "https://irms.midea.com:8080/isales/app/v1/salesReportHeader/insert"
+        data = {'companyId':companyId, 'promoterID':profile_data['__promoterId'],
+                'customerID':'', 'paymentMode':'', 'deliveryMode':'','installation':''}  
+        
+        data.update({'actualSellingDate':'2023-03-07 17:15:34'})
+        data.update({'profile':profile_data})
+        data.update({'remark':saleRecord.remark})
+        data.update({'storeId':saleRecord.storeId})
+        data.update({'dealerId':saleRecord.dealerId})
+        data.update({'salesReportLinesParam':saleRecord.toDict()})
+
+        req = urllib.request.Request(url, json.dumps(data).encode('utf8'), self.json_header)
+        response = self.opener.open(req)
+        response_body = response.read()  
+        try : 
+            response_body = gzip.decompress(response_body) 
+        except Exception as e :
+            print("Not a GZIP file")
+        response_body = response_body.decode("utf-8")  
+        report_data = json.loads(response_body)
+        statusCode = report_data['__statusCode']
+        if statusCode=='S':
+            print('Insert sale record successfully!')        

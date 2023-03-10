@@ -19,7 +19,6 @@ class Config():
     osVersion=None
     passwordType=None
     platform=None        
-    account=None
     enableProxy=None
     server=None
     port=None

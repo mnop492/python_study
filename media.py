@@ -1,8 +1,10 @@
 import socket
 import time
+import sys, getopt
 import pandas as pd
 from Config import Config
 from MediaHelper import MediaHelper
+from MediaSaleRecordHelper import MediaSaleRecordHelper
 from UserInfo import UserInfo
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -12,6 +14,7 @@ socket.setdefaulttimeout(timeout)
 
 config = Config('config.ini')
 mediaHelper = MediaHelper(config)
+saleRecordHelper = None
 
 login_dict = { 'appKey' : config.appKey, 'appName': config.appName, 'appVersion': config.appVersion, 
                 'createTokenPwd':config.createTokenPwd, 'deviceId': config.deviceId, 
@@ -21,6 +24,8 @@ login_dict = { 'appKey' : config.appKey, 'appName': config.appName, 'appVersion'
 df_all_user_saleReport = pd.DataFrame()
 df_all_user_profileReport = pd.DataFrame()
 df_all_user_productReport = pd.DataFrame()
+companyId = 106539
+
 userInfoDict={}
 
 
@@ -52,7 +57,7 @@ def getSaleReport(profile):
         print(profile['__userName'], 'has no record from', first_day, 'to', last_day)
     return sale_report
 
-def startProcess(login_dict):
+def getUserInfo(login_dict):
     sleeptime = 5
     userInfo = UserInfo(login_dict['account'])
     while True :
@@ -61,7 +66,7 @@ def startProcess(login_dict):
             userInfo.profile = mediaHelper.getProfile()
             userInfo.saleReport = getSaleReport(userInfo.profile)
             if df_all_user_productReport.size==0:
-                userInfo.product = mediaHelper.getProduct(userInfo.profile)
+                userInfo.product = mediaHelper.getProduct(userInfo.profile,companyId)
             userInfo.token = mediaHelper.token
         except Exception as err:              
             print(userInfo.account, 'fail to get sale report.', 'Wait', sleeptime, 'seconds to retry!')   
@@ -71,25 +76,101 @@ def startProcess(login_dict):
         break
     return userInfo
 
-for login_info in config.login_info_list:
-    login_dict.update({'account':login_info['account']})
-    login_dict.update({'password': login_info['password']})
-    login_dict.update({'sign':login_info['sign']})
-    userInfo = startProcess(login_dict)    
+def insertSaleRecordByAccount(login_dict):
+    sleeptime = 5
+    userInfo = UserInfo(login_dict['account'])
+    while True :
+        try:
+            mediaHelper.login(login_dict)
+            userInfo.profile = mediaHelper.getProfile()   
+            if not saleRecordHelper.productRecord_df_flag :
+                saleRecordHelper.initProductRecord_df(mediaHelper.getProduct(userInfo.profile,companyId))
+            userInfo.token = mediaHelper.token
+        except Exception as err:              
+            print(userInfo.account, 'fail to login for inserting sale record.', 'Wait', sleeptime, 'seconds to retry!')   
+            time.sleep(sleeptime)  
+            sleeptime += 5
+            continue   
+        break
+    saleRecordList = saleRecordHelper.getTranslatedSaleRecordByAccount(login_dict['account'], userInfo.profile)
+    mediaHelper.insertSaleRecord(userInfo.profile,companyId, saleRecordList[0])
+    return userInfo    
     
-    frames = [df_all_user_saleReport, userInfo.getSaleReportDataFrame()]
-    df_all_user_saleReport = pd.concat(frames)
-    frames = [df_all_user_profileReport, userInfo.getProfileReportDataFrame()]
-    df_all_user_profileReport = pd.concat(frames)
-    if df_all_user_productReport.size==0:
-        frames = [df_all_user_productReport, userInfo.getProductReportDataFrame()]
-        df_all_user_productReport = pd.concat(frames)
-    userInfoDict.update({userInfo.account: userInfo})
-    # sleeptime = 5 + random.randint(1,4)
-    # print('Wait', sleeptime, 'seconds to get next account sale report!')
-    # time.sleep(sleeptime)
+def query(arg):    
+    for login_info in config.login_info_list:
+        if arg=='all' or arg=='a':
+            pass
+        elif arg==login_info['account']:
+            pass
+        else:
+            continue
+        
+        login_dict.update({'account':login_info['account'].lower()})
+        login_dict.update({'password': login_info['password']})
+        login_dict.update({'sign':login_info['sign']})
+        userInfo = getUserInfo(login_dict)    
+        
+        global df_all_user_saleReport, df_all_user_profileReport, df_all_user_productReport,userInfoDict
 
-df_all_user_saleReport = reindexSaleReportDataFrame(df_all_user_saleReport)
-df_all_user_saleReport.to_excel('All_USER_SALEREPORT.xlsx', index=False)
-df_all_user_profileReport.to_excel('All_USER_PROFILE.xlsx', index=False)
-df_all_user_productReport.to_excel('All_USER_PRODUCT.xlsx', index=False)
+        frames = [df_all_user_saleReport, userInfo.getSaleReportDataFrame()]
+        df_all_user_saleReport = pd.concat(frames)
+        frames = [df_all_user_profileReport, userInfo.getProfileReportDataFrame()]
+        df_all_user_profileReport = pd.concat(frames)
+        if df_all_user_productReport.size==0:
+            frames = [df_all_user_productReport, userInfo.getProductReportDataFrame()]
+            df_all_user_productReport = pd.concat(frames)
+        userInfoDict.update({userInfo.account: userInfo})
+        # sleeptime = 5 + random.randint(1,4)
+        # print('Wait', sleeptime, 'seconds to get next account sale report!')
+        # time.sleep(sleeptime)
+
+    df_all_user_saleReport = reindexSaleReportDataFrame(df_all_user_saleReport)
+    df_all_user_saleReport.to_excel('All_USER_SALEREPORT.xlsx', index=False)
+    df_all_user_profileReport.to_excel('All_USER_PROFILE.xlsx', index=False)
+    df_all_user_productReport.to_excel('All_USER_PRODUCT.xlsx', index=False)
+
+def insert(arg):
+    global saleRecordHelper
+    arg = arg.lower()
+    saleRecordHelper = MediaSaleRecordHelper('All_USER_INSERT.xlsx')    
+    for account in saleRecordHelper.saleRecord_account_dict:
+        if arg=='all' or arg=='a':
+            pass
+        elif arg==account:
+            pass
+        else:
+            continue
+
+        login_info = None
+        for info in config.login_info_list:
+            if info['account'].lower() == account.lower():
+                login_info = info
+
+        login_dict.update({'account':login_info['account']})
+        login_dict.update({'password': login_info['password']})
+        login_dict.update({'sign':login_info['sign']}) 
+        
+        insertSaleRecordByAccount(login_dict)
+        # print ('doing account:', arg, saleRecordList)
+
+def main(argv):
+    opts, args = getopt.getopt(argv,"hi:",["insert="])
+    for opt, arg in opts:
+      if opt == '-h':
+         print ('test.py -q <query> -i <insert>')
+         sys.exit()      
+      elif opt in ("-i", "--insert"):
+         insert(arg)
+        #  outputfile = arg
+
+    if len(opts) == 0 and len(args) == 0:
+        query('all')
+    # if args[0] == 'query':        
+    #     query()
+    # elif args[0] == 'insert':
+    #     insert()    
+    # print(opts, args)
+    return
+
+if __name__ == "__main__":
+   main(sys.argv[1:])
