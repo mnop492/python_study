@@ -9,21 +9,21 @@ import base64
 import hashlib
 from pyDes import des, CBC, PAD_PKCS5
 from Config import Config
+from datetime import datetime
 
 class MediaHelper():
     # timeout in seconds
     timeout = 30
     socket.setdefaulttimeout(timeout)   
-    headers = {"Accept" : "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "User-Agent" : "com.midea.map.en/5.1.8 (iPhone; iOS 16.2; Scale/3.00)",
-        "Accept-Encoding" : "gzip, deflate, br",
-        "Accept-Language" : "zh-Hant-HK;q=1, yue-Hant-HK;q=0.9, en-GB;q=0.8, ja-HK;q=0.7, zh-Hans-HK;q=0.6",
-        "X-Requested-With" : "com.mannings.app",
-        "Upgrade-Insecure-Requests" : "1",
-        "Cookie": "PHPSESSID=ehlu07th5pmprrb214r4f4e2c5"
+    headers = {"Accept" : "*/*",
+        "User-Agent" : "Mozilla/5.0 (iPhone; CPU iPhone OS 12_5_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148/mideaConnect MissonWebKit/220720001/zh-Hans/com.midea.link.appstore (AppStore)/MissonWKCordova",
+        "Accept-Encoding" : "br, gzip, deflate",
+        "Accept-Language" : "zh-tw",
+        "Upgrade-Insecure-Requests" : "1",   
+        "Connection": "keep-alive"     
         }
     json_header = headers.copy()
-    json_header.update({'Content-Type':'application/json'})
+    json_header.update({'Content-Type':'application/json;charset=UTF-8'})
     cj = None        
     token = None
     config = None
@@ -159,7 +159,10 @@ class MediaHelper():
         data = {'companyId':companyId, 'promoterID':profile_data['__promoterId'],
                 'customerID':'', 'paymentMode':'', 'deliveryMode':'','installation':''}  
         
-        data.update({'actualSellingDate':'2023-03-07 17:15:34'})
+        current_dateTime = datetime.now()
+        dt_string = current_dateTime.strftime("%Y-%m-%d %H:%M:%S")
+
+        data.update({'actualSellingDate':'2023-04-07 17:15:34'})
         data.update({'profile':profile_data})
         data.update({'remark':saleRecord.remark})
         data.update({'storeId':saleRecord.storeId})
@@ -177,4 +180,25 @@ class MediaHelper():
         report_data = json.loads(response_body)
         statusCode = report_data['__statusCode']
         if statusCode=='S':
-            print('Insert sale record successfully!')        
+            print('Insert sale record successfully!')     
+
+    def cancelSaleRecord(self, profile_data, headerID):
+        url = "https://irms.midea.com:8080/isales/app/v1/salesReportHeader/cancel"
+        data = {'headerID':headerID, 'invalidReason':'Wrong data','invalidType':'1',
+                'profile':profile_data}  
+    
+        req = urllib.request.Request(url, json.dumps(data).encode('utf8'), self.json_header)
+        response = self.opener.open(req)
+        response_body = response.read()  
+        try : 
+            response_body = gzip.decompress(response_body) 
+        except Exception as e :
+            print("Not a GZIP file")
+        response_body = response_body.decode("utf-8")  
+        report_data = json.loads(response_body)
+        statusCode = report_data['__statusCode']
+        if statusCode=='S':
+            print(profile_data['__userName'], 'cancel sale record', headerID, 'successfully!') 
+            return
+        else :
+            print(profile_data['__userName'], 'fail to cancel sale record', headerID) 

@@ -5,6 +5,7 @@ import pandas as pd
 from Config import Config
 from MediaHelper import MediaHelper
 from MediaSaleRecordHelper import MediaSaleRecordHelper
+from MediaCancelSaleRecordHelper import MediaCancelSaleRecordHelper
 from UserInfo import UserInfo
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -14,7 +15,6 @@ socket.setdefaulttimeout(timeout)
 
 config = Config('config.ini')
 mediaHelper = MediaHelper(config)
-saleRecordHelper = None
 
 login_dict = { 'appKey' : config.appKey, 'appName': config.appName, 'appVersion': config.appVersion, 
                 'createTokenPwd':config.createTokenPwd, 'deviceId': config.deviceId, 
@@ -59,7 +59,7 @@ def getSaleReport(profile):
 
 def getUserInfo(login_dict):
     sleeptime = 5
-    userInfo = UserInfo(login_dict['account'])
+    userInfo = UserInfo(login_dict['account'].lower())
     while True :
         try:
             mediaHelper.login(login_dict)
@@ -76,7 +76,7 @@ def getUserInfo(login_dict):
         break
     return userInfo
 
-def insertSaleRecordByAccount(login_dict):
+def insertSaleRecordByAccount(login_dict, saleRecordHelper):
     sleeptime = 5
     userInfo = UserInfo(login_dict['account'])
     while True :
@@ -93,7 +93,8 @@ def insertSaleRecordByAccount(login_dict):
             continue   
         break
     saleRecordList = saleRecordHelper.getTranslatedSaleRecordByAccount(login_dict['account'], userInfo.profile)
-    mediaHelper.insertSaleRecord(userInfo.profile,companyId, saleRecordList[0])
+    for saleRecord in saleRecordList:
+        mediaHelper.insertSaleRecord(userInfo.profile,companyId, saleRecord)
     return userInfo    
     
 def query(arg):    
@@ -105,7 +106,7 @@ def query(arg):
         else:
             continue
         
-        login_dict.update({'account':login_info['account'].lower()})
+        login_dict.update({'account':login_info['account']})
         login_dict.update({'password': login_info['password']})
         login_dict.update({'sign':login_info['sign']})
         userInfo = getUserInfo(login_dict)    
@@ -129,14 +130,13 @@ def query(arg):
     df_all_user_profileReport.to_excel('All_USER_PROFILE.xlsx', index=False)
     df_all_user_productReport.to_excel('All_USER_PRODUCT.xlsx', index=False)
 
-def insert(arg):
-    global saleRecordHelper
+def insert(arg):    
     arg = arg.lower()
     saleRecordHelper = MediaSaleRecordHelper('All_USER_INSERT.xlsx')    
     for account in saleRecordHelper.saleRecord_account_dict:
         if arg=='all' or arg=='a':
             pass
-        elif arg==account:
+        elif arg==account.lower():
             pass
         else:
             continue
@@ -150,18 +150,61 @@ def insert(arg):
         login_dict.update({'password': login_info['password']})
         login_dict.update({'sign':login_info['sign']}) 
         
-        insertSaleRecordByAccount(login_dict)
+        insertSaleRecordByAccount(login_dict, saleRecordHelper)
         # print ('doing account:', arg, saleRecordList)
 
+def cancelSaleRecordByAccountAndHeaderID(login_dict, cancelSaleRecordHelper):
+    sleeptime = 5
+    userInfo = UserInfo(login_dict['account'])
+    while True :
+        try:
+            mediaHelper.login(login_dict)
+            userInfo.profile = mediaHelper.getProfile()
+            userInfo.token = mediaHelper.token
+        except Exception as err:              
+            print(userInfo.account, 'fail to login for cancel sale record.', 'Wait', sleeptime, 'seconds to retry!')   
+            time.sleep(sleeptime)  
+            sleeptime += 5
+            continue   
+        break
+    cancelSaleRecordList = cancelSaleRecordHelper.cancel_saleRecord_account_dict[login_dict['account'].lower()]
+    for headerID in cancelSaleRecordList:
+        mediaHelper.cancelSaleRecord(userInfo.profile, headerID)
+    return userInfo
+
+def cancel(arg):     
+    cancelSaleRecordHelper = MediaCancelSaleRecordHelper('All_USER_CANCEL.xlsx')    
+    for account in cancelSaleRecordHelper.cancel_saleRecord_account_dict:        
+        if arg=='all' or arg=='a':
+            pass
+        elif arg==account.lower():
+            pass
+        else:
+            continue
+
+        login_info = None
+        for info in config.login_info_list:
+            if info['account'].lower() == account.lower():
+                login_info = info
+
+        login_dict.update({'account':login_info['account']})
+        login_dict.update({'password': login_info['password']})
+        login_dict.update({'sign':login_info['sign']}) 
+        
+        cancelSaleRecordByAccountAndHeaderID(login_dict, cancelSaleRecordHelper)
+    return
+
 def main(argv):
-    opts, args = getopt.getopt(argv,"hi:",["insert="])
+    opts, args = getopt.getopt(argv,"hi:c:",["insert=","cancel="])
     for opt, arg in opts:
-      if opt == '-h':
-         print ('test.py -q <query> -i <insert>')
-         sys.exit()      
-      elif opt in ("-i", "--insert"):
-         insert(arg)
-        #  outputfile = arg
+        if opt == '-h':
+            print ('test.py -q <query> -i <insert>')
+            sys.exit()      
+        elif opt in ("-i", "--insert"):
+             insert(arg)
+            #  outputfile = arg
+        elif opt in ("-c", "--cancel"):
+             cancel(arg)
 
     if len(opts) == 0 and len(args) == 0:
         query('all')

@@ -42,6 +42,8 @@ class MediaSaleRecordHelper():
         productRecord_df = pd.json_normalize(productRecord)
         self.productRecord_df = productRecord_df
         self.productRecord_df.fillna('', inplace=True)
+        for index, row in self.productRecord_df.iterrows():            
+            self.productRecord_dict.update({row['itemNumber']:row['itemId']})
         self.productRecord_df_flag = True
 
     def getTranslatedSaleRecordByAccount(self, account, profile):
@@ -53,10 +55,7 @@ class MediaSaleRecordHelper():
         return saleRecordList
     
     def translateProductID(self, productID):
-        for index, row in self.productRecord_df.iterrows():
-            if row['itemNumber'] == productID:
-                productID = row['itemId']
-            break
+        productID = self.productRecord_dict[productID]
         return productID
     
     def translateDealerId(self, dealerId, profile):
