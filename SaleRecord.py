@@ -14,6 +14,7 @@ class SaleRecord():
     paymentMode = None
     storeId = None
     dealerId = None
+    actualSellingDate = None
 
     def __init__(self, account, profile, saleReport, token):
         self.account = account

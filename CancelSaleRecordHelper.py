@@ -1,7 +1,6 @@
 import pandas as pd
-from SaleRecord import SaleRecord
 
-class MediaCancelSaleRecordHelper():
+class CancelSaleRecordHelper():
     cancel_saleRecord_account_dict = {}
 
     def __init__(self, cancelExcelFile):

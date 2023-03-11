@@ -1,6 +1,6 @@
 import pandas as pd
 
-class UserInfo():
+class QueryInfo():
     profile = None
     saleReport = None
     token = None

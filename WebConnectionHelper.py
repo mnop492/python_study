@@ -11,7 +11,7 @@ from pyDes import des, CBC, PAD_PKCS5
 from Config import Config
 from datetime import datetime
 
-class MediaHelper():
+class WebConnectionHelper():
     # timeout in seconds
     timeout = 30
     socket.setdefaulttimeout(timeout)   
@@ -162,11 +162,13 @@ class MediaHelper():
         current_dateTime = datetime.now()
         dt_string = current_dateTime.strftime("%Y-%m-%d %H:%M:%S")
 
-        data.update({'actualSellingDate':'2023-04-07 17:15:34'})
+        # data.update({'actualSellingDate':'2023-04-07 17:15:34'})
+        
         data.update({'profile':profile_data})
         data.update({'remark':saleRecord.remark})
         data.update({'storeId':saleRecord.storeId})
         data.update({'dealerId':saleRecord.dealerId})
+        data.update({'actualSellingDate':saleRecord.actualSellingDate})
         data.update({'salesReportLinesParam':saleRecord.toDict()})
 
         req = urllib.request.Request(url, json.dumps(data).encode('utf8'), self.json_header)

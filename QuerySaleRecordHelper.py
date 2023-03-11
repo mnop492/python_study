@@ -1,11 +1,12 @@
 import pandas as pd
 from SaleRecord import SaleRecord
 
-class MediaSaleRecordHelper():
+class QuerySaleRecordHelper():
     saleRecord_df = None
     productRecord_df = None
     productRecord_df_flag = False
     saleRecord_account_dict = {}
+    productRecord_dict = {}
 
     def __init__(self, saleExcelFile):
         self.saleRecord_df = pd.read_excel(saleExcelFile)
@@ -28,6 +29,7 @@ class MediaSaleRecordHelper():
             saleRecord.paymentMode = row['paymentMode']
             saleRecord.storeId = row['storeId']
             saleRecord.dealerId = row['dealerId']
+            saleRecord.actualSellingDate = row['actualSellingDate']
 
             saleRecordList = None
             if saleRecord.account in self.saleRecord_account_dict:
