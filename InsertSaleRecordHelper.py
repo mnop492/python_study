@@ -26,8 +26,7 @@ class InsertSaleRecordHelper():
             saleRecordList.append(saleRecord)
             self.saleRecord_account_dict.update({saleRecord.account:saleRecordList})
 
-    def initProductRecord_df(self, productRecord):
-        productRecord_df = pd.json_normalize(productRecord)
+    def initProductRecord_df(self, productRecord_df):        
         self.productRecord_df = productRecord_df
         self.productRecord_df.fillna('', inplace=True)
         for col, row in self.productRecord_df.iterrows():            

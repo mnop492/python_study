@@ -35,19 +35,20 @@ def getSaleReport(profile):
         print(profile['__userName'], 'has no record from', first_day, 'to', last_day)
     return sale_report
 
-def getQueryInfo(login_dict, querySaleRecordHelper):
+def getQueryInfo(login_dict, querySaleRecordHelper, isGetSaleReport=True):
     sleeptime = 5
     queryInfo = QueryInfo(login_dict['account'].lower())
     while True :
         try:
             webConnectionHelper.login(login_dict)
             queryInfo.profile = webConnectionHelper.getProfile()
-            queryInfo.saleReport = getSaleReport(queryInfo.profile)
+            if isGetSaleReport:
+                queryInfo.saleReport = getSaleReport(queryInfo.profile)
             if querySaleRecordHelper.isProductReportEmpty():
                 queryInfo.product = webConnectionHelper.getProduct(queryInfo.profile,companyId)
             queryInfo.token = webConnectionHelper.token
         except Exception as err:              
-            print(queryInfo.account, 'fail to get sale report.', 'Wait', sleeptime, 'seconds to retry!')   
+            print(queryInfo.account, 'fail to query report.', 'Wait', sleeptime, 'seconds to retry!')   
             time.sleep(sleeptime)
             sleeptime += 5
             continue   
@@ -75,22 +76,11 @@ def query(arg):
         # time.sleep(sleeptime)
     querySaleRecordHelper.writeExcel()
 
-def insertSaleRecordByAccount(login_dict, insertSaleRecordHelper):
-    sleeptime = 5
-    queryInfo = QueryInfo(login_dict['account'])
-    while True :
-        try:
-            webConnectionHelper.login(login_dict)
-            queryInfo.profile = webConnectionHelper.getProfile()   
-            if not insertSaleRecordHelper.productRecord_df_flag :
-                insertSaleRecordHelper.initProductRecord_df(webConnectionHelper.getProduct(queryInfo.profile,companyId))
-            queryInfo.token = webConnectionHelper.token
-        except Exception as err:              
-            print(queryInfo.account, 'fail to login for inserting sale record.', 'Wait', sleeptime, 'seconds to retry!')   
-            time.sleep(sleeptime)  
-            sleeptime += 5
-            continue   
-        break
+def insertSaleRecordByAccount(login_dict, insertSaleRecordHelper, querySaleRecordHelper):
+    queryInfo = getQueryInfo(login_dict, querySaleRecordHelper, isGetSaleReport=False)
+    querySaleRecordHelper.initProductReport(queryInfo)
+    if not insertSaleRecordHelper.productRecord_df_flag :
+        insertSaleRecordHelper.initProductRecord_df(querySaleRecordHelper.df_all_user_productReport)
     saleRecordList = insertSaleRecordHelper.getTranslatedSaleRecordByAccount(login_dict['account'], queryInfo.profile)
     for saleRecord in saleRecordList:
         webConnectionHelper.insertSaleRecord(queryInfo.profile,companyId, saleRecord)
@@ -98,6 +88,7 @@ def insertSaleRecordByAccount(login_dict, insertSaleRecordHelper):
 
 def insert(arg):    
     arg = arg.lower()
+    querySaleRecordHelper = QuerySaleRecordHelper()
     insertSaleRecordHelper = InsertSaleRecordHelper('All_USER_INSERT.xlsx')    
     for account in insertSaleRecordHelper.saleRecord_account_dict:
         if arg=='all' or arg=='a':
@@ -116,7 +107,7 @@ def insert(arg):
         login_dict.update({'password': login_info['password']})
         login_dict.update({'sign':login_info['sign']}) 
         
-        insertSaleRecordByAccount(login_dict, insertSaleRecordHelper)
+        insertSaleRecordByAccount(login_dict, insertSaleRecordHelper, querySaleRecordHelper)
         # print ('doing account:', arg, saleRecordList)
 
 def cancelSaleRecordByAccountAndHeaderID(login_dict, cancelSaleRecordHelper):

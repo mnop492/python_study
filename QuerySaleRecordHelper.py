@@ -33,14 +33,18 @@ class QuerySaleRecordHelper():
         df_json = df_json[columns]
         return df_json
 
-    def updateQueryInfoList(self, queryInfo):
-        frames = [self.df_all_user_saleReport, queryInfo.getSaleReportDataFrame()]
-        self.df_all_user_saleReport = pd.concat(frames)
-        frames = [self.df_all_user_profileReport, queryInfo.getProfileReportDataFrame()]
-        self.df_all_user_profileReport = pd.concat(frames)
+    def updateProductReport(self, queryInfo):
         if self.isProductReportEmpty():
             frames = [self.df_all_user_productReport, queryInfo.getProductReportDataFrame()]
             self.df_all_user_productReport = pd.concat(frames)
+
+    def updateQueryInfoList(self, queryInfo):
+        frames = [self.df_all_user_saleReport, queryInfo.getSaleReportDataFrame()]
+        self.df_all_user_saleReport = pd.concat(frames)
+        self.updateProductReport(queryInfo)
+        frames = [self.df_all_user_profileReport, queryInfo.getProfileReportDataFrame()]
+        self.df_all_user_profileReport = pd.concat(frames)
+        
 
         self.queryInfoDict.update({queryInfo.account.lower(): queryInfo})
 
