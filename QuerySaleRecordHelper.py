@@ -33,7 +33,7 @@ class QuerySaleRecordHelper():
         df_json = df_json[columns]
         return df_json
 
-    def updateProductReport(self, queryInfo):
+    def initProductReport(self, queryInfo):
         if self.isProductReportEmpty():
             frames = [self.df_all_user_productReport, queryInfo.getProductReportDataFrame()]
             self.df_all_user_productReport = pd.concat(frames)
