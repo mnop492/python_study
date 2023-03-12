@@ -37,17 +37,17 @@ class InsertSaleRecordHelper():
         saleRecordList = self.saleRecord_account_dict[account.lower()]
         for record in saleRecordList:
             record.productID = self.translateProductID(record.productID)
-            record.storeId = self.translateStoreId(record.storeId, profile)
-            record.dealerId = self.translateDealerId(record.dealerId, profile)
+            record.dealerId = self.translateDealerId(record.storeId, profile)
+            record.storeId = self.translateStoreId(record.storeId, profile)            
         return saleRecordList
     
     def translateProductID(self, productID):
         productID = self.productRecord_dict[productID]
         return productID
     
-    def translateDealerId(self, dealerId, profile):
+    def translateDealerId(self, storeId, profile):
         for dealer in profile['__promoterStoreMapList']:
-            if dealer['dealerName']==dealerId: 
+            if dealer['storeName']==storeId: 
                 dealerId = dealer['dealerId']
         return dealerId
     

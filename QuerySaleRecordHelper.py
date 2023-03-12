@@ -41,7 +41,7 @@ class QuerySaleRecordHelper():
     def updateQueryInfoList(self, queryInfo):
         frames = [self.df_all_user_saleReport, queryInfo.getSaleReportDataFrame()]
         self.df_all_user_saleReport = pd.concat(frames)
-        self.updateProductReport(queryInfo)
+        self.initProductReport(queryInfo)
         frames = [self.df_all_user_profileReport, queryInfo.getProfileReportDataFrame()]
         self.df_all_user_profileReport = pd.concat(frames)
         
