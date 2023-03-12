@@ -131,6 +131,7 @@ def cancelSaleRecordByAccountAndHeaderID(login_dict, cancelSaleRecordHelper):
 
 def cancel(arg):     
     cancelSaleRecordHelper = CancelSaleRecordHelper('All_USER_CANCEL.xlsx')    
+    arg = arg.lower()
     for account in cancelSaleRecordHelper.cancel_saleRecord_account_dict:        
         if arg=='all' or arg=='a':
             pass
