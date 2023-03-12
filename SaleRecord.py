@@ -15,6 +15,9 @@ class SaleRecord():
     storeId = None
     dealerId = None
     actualSellingDate = None
+    productName = None
+    storeName = None
+    dealerName = None
 
     def __init__(self, row):
         self.account = row['account'].lower()
@@ -31,10 +34,15 @@ class SaleRecord():
         self.storeId = row['storeId']
         self.dealerId = row['dealerId']
         self.actualSellingDate = row['actualSellingDate']
-
+        self.productName = row['productID']
+        self.storeName = row['storeId']
+        self.dealerName = row['dealerId']
     def toDict(self):
         dict = {'documentNumber':self.documentNumber, 'price':self.price, 'productID': self.productID, 
                 'qty':self.qty, 'serialNoType':self.serialNoType, 'serialNumber':self.serialNumber}
         list = [dict]
         # dict = {'salesReportLinesParam':list}        
         return list
+    
+    def getSaleRecordID(self):
+        return self.account + self.actualSellingDate

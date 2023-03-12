@@ -55,12 +55,13 @@ def getQueryInfo(login_dict, querySaleRecordHelper, isGetSaleReport=True):
         break
     return queryInfo
 
-def query(arg):    
+def query(arg):  
+    arg = arg.lower()  
     querySaleRecordHelper = QuerySaleRecordHelper()
     for login_info in config.login_info_list:
         if arg=='all' or arg=='a':
             pass
-        elif arg==login_info['account']:
+        elif arg==login_info['account'].lower():
             pass
         else:
             continue
@@ -77,13 +78,25 @@ def query(arg):
     querySaleRecordHelper.writeExcel()
 
 def insertSaleRecordByAccount(login_dict, insertSaleRecordHelper, querySaleRecordHelper):
-    queryInfo = getQueryInfo(login_dict, querySaleRecordHelper, isGetSaleReport=False)
+    queryInfo = getQueryInfo(login_dict, querySaleRecordHelper)
     querySaleRecordHelper.initProductReport(queryInfo)
     if not insertSaleRecordHelper.productRecord_df_flag :
         insertSaleRecordHelper.initProductRecord_df(querySaleRecordHelper.df_all_user_productReport)
     saleRecordList = insertSaleRecordHelper.getTranslatedSaleRecordByAccount(login_dict['account'], queryInfo.profile)
     for saleRecord in saleRecordList:
-        webConnectionHelper.insertSaleRecord(queryInfo.profile,companyId, saleRecord)
+        df = queryInfo.getSaleReportDataFrame()
+        isDuplicate = False
+        for col, row in df.iterrows():            
+            if saleRecord.getSaleRecordID() == row['account'].lower() + row['actualSellingDate']:
+                isDuplicate = True
+                break
+        if (not isDuplicate):
+            webConnectionHelper.insertSaleRecord(queryInfo.profile,companyId, saleRecord)
+            sleeptime = 3
+            print("Wait", sleeptime, "seconds to insert next record.")
+            time.sleep(sleeptime)
+        else:
+            print(saleRecord.account, saleRecord.actualSellingDate, 'is duplicated, fail to insert.')
     return queryInfo    
 
 def insert(arg):    
@@ -108,6 +121,7 @@ def insert(arg):
         login_dict.update({'sign':login_info['sign']}) 
         
         insertSaleRecordByAccount(login_dict, insertSaleRecordHelper, querySaleRecordHelper)
+        
         # print ('doing account:', arg, saleRecordList)
 
 def cancelSaleRecordByAccountAndHeaderID(login_dict, cancelSaleRecordHelper):

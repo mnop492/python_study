@@ -159,8 +159,8 @@ class WebConnectionHelper():
         data = {'companyId':companyId, 'promoterID':profile_data['__promoterId'],
                 'customerID':'', 'paymentMode':'', 'deliveryMode':'','installation':''}  
         
-        current_dateTime = datetime.now()
-        dt_string = current_dateTime.strftime("%Y-%m-%d %H:%M:%S")
+        # current_dateTime = datetime.now()
+        # dt_string = current_dateTime.strftime("%Y-%m-%d %H:%M:%S")
 
         # data.update({'actualSellingDate':'2023-04-07 17:15:34'})
         
@@ -182,7 +182,8 @@ class WebConnectionHelper():
         report_data = json.loads(response_body)
         statusCode = report_data['__statusCode']
         if statusCode=='S':
-            print('Insert sale record successfully!')     
+            print(saleRecord.account,'productName',saleRecord.productName, 'price', saleRecord.price, 
+                 'qty', saleRecord.qty, 'storeName', saleRecord.storeName, 'dealerName',saleRecord.dealerName, 'insert sale record successfully!')     
 
     def cancelSaleRecord(self, profile_data, headerID):
         url = "https://irms.midea.com:8080/isales/app/v1/salesReportHeader/cancel"
