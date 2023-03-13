@@ -8,7 +8,9 @@
             "program": "${file}",
             "console": "integratedTerminal",
             // "args": ["--ifile", "IN", "--ofile", "OUT"]
-            "args": ["-i","ex_KwaiLinY"]
+            // "args": ["-i","ex_KwaiLinY"]
+            // "args": ["-c", "ex_KwaiLinY"]
+            "args": ["-p"]
         }
     ]
 }

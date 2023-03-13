@@ -8,10 +8,11 @@ class InsertSaleRecordHelper():
     saleRecord_account_dict = {}
     productRecord_dict = {}
 
-    def __init__(self, saleExcelFile):
-        self.saleRecord_df = pd.read_excel(saleExcelFile)
-        self.saleRecord_df.fillna('', inplace=True)
-        self.processSaleRecordData(self.saleRecord_df)
+    def __init__(self, saleExcelFile=None):
+        if saleExcelFile != None:
+            self.saleRecord_df = pd.read_excel(saleExcelFile)
+            self.saleRecord_df.fillna('', inplace=True)
+            self.processSaleRecordData(self.saleRecord_df)
 
     def processSaleRecordData(self, saleRecord_df):
 
