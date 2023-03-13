@@ -27,6 +27,9 @@ class InsertSaleRecordHelper():
             saleRecordList.append(saleRecord)
             self.saleRecord_account_dict.update({saleRecord.account:saleRecordList})
 
+    def initByDict(self, saleRecord_account_dict):
+        self.saleRecord_account_dict = saleRecord_account_dict
+        
     def initProductRecord_df(self, productRecord_df):        
         self.productRecord_df = productRecord_df
         self.productRecord_df.fillna('', inplace=True)
@@ -34,6 +37,10 @@ class InsertSaleRecordHelper():
             self.productRecord_dict.update({row['itemNumber']:row['itemId']})
         self.productRecord_df_flag = True
 
+    def getSaleRecordByAccount(self, account):
+        saleRecordList = self.saleRecord_account_dict[account.lower()]            
+        return saleRecordList
+    
     def getTranslatedSaleRecordByAccount(self, account, profile):
         saleRecordList = self.saleRecord_account_dict[account.lower()]
         for record in saleRecordList:
