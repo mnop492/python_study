@@ -63,7 +63,10 @@ class QuerySaleRecordHelper():
 
 
     def getSaleRecordListByAccount(self, account):
-        return self.saleRecord_account_dict[account]
+        if account in self.saleRecord_account_dict:
+            return self.saleRecord_account_dict[account]
+        else:
+            return None
 
     def writeExcel(self):
         self.df_all_user_saleReport = self.reindexSaleReportDataFrame(self.df_all_user_saleReport)

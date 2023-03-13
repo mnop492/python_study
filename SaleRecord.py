@@ -59,9 +59,9 @@ class SaleRecord():
         self.paymentMode = row['paymentModeMeaning']
         self.actualSellingDate = row['actualSellingDate']
 
-        self.productID = row['z_productID']
+        # self.productID = row['z_productID']
         self.productName = row['z_productName']
-        self.storeId = row['storeId']        
+        # self.storeId = row['storeId']        
         self.storeName = row['storeName']
 
         self.serialNoType = row['z_snInputTypeStatus']

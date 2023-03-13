@@ -13,14 +13,21 @@ class PushSaleRecordHelper():
 
     def processSaleRecordData(self, pushSaleRecord_df):
         for col, row in pushSaleRecord_df.iterrows():
+            if row.empty:
+                continue
+
             saleRecord = SaleRecord(row)
             pushSaleRecordList = None
             cancelSaleRecordList = None
             insertSaleRecordList = None
+
             if saleRecord.account in self.push_saleRecord_account_dict:
                 pushSaleRecordList = self.push_saleRecord_account_dict[saleRecord.account]                
             else:
                 pushSaleRecordList = []   
+
+            pushSaleRecordList.append(saleRecord)
+            self.push_saleRecord_account_dict.update({saleRecord.account:pushSaleRecordList})
             
             if row['approveStatus'] == 'Cancelled' and row['headerID']:
                 if saleRecord.account in self.cancel_saleRecord_account_dict:
@@ -28,20 +35,21 @@ class PushSaleRecordHelper():
                 else:
                     cancelSaleRecordList = []
 
+                cancelSaleRecordList.append(saleRecord)
+                self.cancel_saleRecord_account_dict.update({saleRecord.account:cancelSaleRecordList})
+
             if not row['headerID']:
                 if saleRecord.account in self.insert_saleRecord_account_dict:
                     insertSaleRecordList = self.insert_saleRecord_account_dict[saleRecord.account]                
                 else:
                     insertSaleRecordList = []
                 
-            pushSaleRecordList.append(saleRecord)
-            self.push_saleRecord_account_dict.update({saleRecord.account:pushSaleRecordList})
+                insertSaleRecordList.append(saleRecord)
+                self.insert_saleRecord_account_dict.update({saleRecord.account:insertSaleRecordList})
 
-            cancelSaleRecordList.append(saleRecord)
-            self.cancel_saleRecord_account_dict.update({saleRecord.account:cancelSaleRecordList})
+            
 
-            insertSaleRecordList.append(saleRecord)
-            self.insert_saleRecord_account_dict.update({saleRecord.account:insertSaleRecordList})
+            
 
     def diffSaleRecordByAccount(self, account, querySaleRecordList):
         diff = False

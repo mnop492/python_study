@@ -54,9 +54,16 @@ class WebConnectionHelper():
             print("Not a GZIP file")
         
         response_body = response_body.decode("utf-8")
-        response_json = json.loads(response_body)    
-        self.token = response_json['data']['accessToken']
-        return self.token
+        response_json = json.loads(response_body) 
+        if response_json['code'] == 0:  
+            self.token = response_json['data']['accessToken']
+            return self.token
+        elif response_json['code'] == 61003 or response_json['code'] == 61013:
+            print(login_dict['account'], "need to update password and sign!")
+            return None
+        else:
+            print(login_dict['account'], "fail to login!")
+            return None
 
     def getProfile(self):
         url = "https://irms.midea.com:8080/isales/basis/profile"

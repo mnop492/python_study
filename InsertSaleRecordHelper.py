@@ -5,7 +5,7 @@ class InsertSaleRecordHelper():
     saleRecord_df = None
     productRecord_df = None
     productRecord_df_flag = False
-    saleRecord_account_dict = {}
+    insertSaleRecord_account_dict = {}
     productRecord_dict = {}
 
     def __init__(self, saleExcelFile=None):
@@ -19,16 +19,16 @@ class InsertSaleRecordHelper():
         for col, row in saleRecord_df.iterrows():
             saleRecord = SaleRecord(row)
             saleRecordList = None
-            if saleRecord.account in self.saleRecord_account_dict:
-                saleRecordList = self.saleRecord_account_dict[saleRecord.account]                
+            if saleRecord.account in self.insertSaleRecord_account_dict:
+                saleRecordList = self.insertSaleRecord_account_dict[saleRecord.account]                
             else:
                 saleRecordList = []   
                 
             saleRecordList.append(saleRecord)
-            self.saleRecord_account_dict.update({saleRecord.account:saleRecordList})
+            self.insertSaleRecord_account_dict.update({saleRecord.account:saleRecordList})
 
     def initByDict(self, saleRecord_account_dict):
-        self.saleRecord_account_dict = saleRecord_account_dict
+        self.insertSaleRecord_account_dict = saleRecord_account_dict
         
     def initProductRecord_df(self, productRecord_df):        
         self.productRecord_df = productRecord_df
@@ -38,29 +38,37 @@ class InsertSaleRecordHelper():
         self.productRecord_df_flag = True
 
     def getSaleRecordByAccount(self, account):
-        saleRecordList = self.saleRecord_account_dict[account.lower()]            
+        saleRecordList = self.insertSaleRecord_account_dict[account.lower()]            
         return saleRecordList
     
     def getTranslatedSaleRecordByAccount(self, account, profile):
-        saleRecordList = self.saleRecord_account_dict[account.lower()]
+        saleRecordList = self.insertSaleRecord_account_dict[account.lower()]
         for record in saleRecordList:
-            record.productID = self.translateProductID(record.productID)
-            record.dealerId = self.translateDealerId(record.storeId, profile)
-            record.storeId = self.translateStoreId(record.storeId, profile)            
+            record.productID = self.translateProductID(record.productName)
+            record.dealerId = self.translateDealerId(record.storeName, profile)
+            record.storeId = self.translateStoreId(record.storeName, profile)
+            record.dealerName = self.translateDealerName(record.storeName, profile)         
         return saleRecordList
     
-    def translateProductID(self, productID):
-        productID = self.productRecord_dict[productID]
+    def translateProductID(self, productName):
+        productID = self.productRecord_dict[productName]
         return productID
     
-    def translateDealerId(self, storeId, profile):
+    def translateDealerId(self, storeName, profile):
         for dealer in profile['__promoterStoreMapList']:
-            if dealer['storeName']==storeId: 
+            if dealer['storeName']==storeName: 
+                dealerId = dealer['dealerId']
                 dealerId = dealer['dealerId']
         return dealerId
     
-    def translateStoreId(self, storeId, profile):
+    def translateStoreId(self, storeName, profile):
         for store in profile['__promoterStoreMapList']:
-            if store['storeName']==storeId: 
+            if store['storeName']==storeName: 
                 storeId = store['storeId']
         return storeId
+    
+    def translateDealerName(self, storeName, profile):
+        for store in profile['__promoterStoreMapList']:
+            if store['storeName']==storeName: 
+                dealerName = store['dealerName']
+        return dealerName
