@@ -5,11 +5,9 @@ import urllib.request
 import http.cookiejar
 import gzip
 import json
-import base64
-import hashlib
-from pyDes import des, CBC, PAD_PKCS5
 from Config import Config
 from datetime import datetime
+from Cryption import Cryption
 
 class WebConnectionHelper():
     # timeout in seconds
@@ -38,31 +36,12 @@ class WebConnectionHelper():
             proxyAddrAndPort = config.server+':'+config.port
             ProxyHandler = urllib.request.ProxyHandler({'http' : proxyAddrAndPort, 'https' : proxyAddrAndPort})
             self.opener = urllib.request.build_opener(ProxyHandler, urllib.request.HTTPCookieProcessor(self.cj))
-        urllib.request.install_opener(self.opener)
-
-    def des_encrypt_b64(self, secret_key, password):
-        bArr = [1, 2, 3, 4, 5, 6, 7, 8]
-        input_text = password
-        iv = bytearray(bArr)
-        k = des(secret_key, CBC, iv, pad=None, padmode=PAD_PKCS5)
-        en = k.encrypt(input_text, padmode=PAD_PKCS5)
-        return str(base64.b64encode(en),'utf-8')
-
-    def sign(self, data_dict):
-        SECRET = 'mx-muc5.0-sign' 
-        data_dict.pop('sign')
-        data_dict = dict(sorted(data_dict.items()))
-        str = ""
-        for key in data_dict:
-            str += key
-            str += data_dict[key]        
-        md5 = hashlib.md5((SECRET + str +SECRET).encode("utf8")).hexdigest()   
-        return md5
+        urllib.request.install_opener(self.opener)    
         
     def login(self, login_dict):
         login_dict = login_dict.copy()
-        login_dict.update({'password': self.des_encrypt_b64(login_dict['appKey'], login_dict['password'])})
-        # sign_str = sign(login_dict)
+        login_dict.update({'password': Cryption.des_encrypt_b64(login_dict['appKey'], login_dict['password'])})
+        # sign_str = Cryption.sign(login_dict)
         # print(sign_str)
             
         login_data = urllib.parse.urlencode(login_dict)
@@ -183,7 +162,11 @@ class WebConnectionHelper():
         statusCode = report_data['__statusCode']
         if statusCode=='S':
             print(saleRecord.account,'productName',saleRecord.productName, 'price', saleRecord.price, 
-                 'qty', saleRecord.qty, 'storeName', saleRecord.storeName, 'dealerName',saleRecord.dealerName, 'insert sale record successfully!')     
+                 'qty', saleRecord.qty, 'storeName', saleRecord.storeName, 'dealerName',saleRecord.dealerName, 'insert sale record successfully!') 
+        else:
+            print(saleRecord.account, saleRecord.productName, 'price', saleRecord.price, 
+                 'qty', saleRecord.qty, 'storeName', saleRecord.storeName, 'dealerName',saleRecord.dealerName,'fail to insert sale record')
+            raise Exception
 
     def cancelSaleRecord(self, profile_data, headerID):
         url = "https://irms.midea.com:8080/isales/app/v1/salesReportHeader/cancel"
@@ -204,4 +187,6 @@ class WebConnectionHelper():
             print(profile_data['__userName'], 'cancel sale record', headerID, 'successfully!') 
             return
         else :
-            print(profile_data['__userName'], 'fail to cancel sale record', headerID) 
+            print(profile_data['__userName'], 'fail to cancel sale record', headerID)
+            raise Exception
+             
