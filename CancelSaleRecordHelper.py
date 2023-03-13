@@ -18,3 +18,5 @@ class CancelSaleRecordHelper():
     def initByDataFrame(self, cancel_saleRecord_account_df):
         self.cancel_saleRecord_account_dict = cancel_saleRecord_account_df
 
+    def initByDict(self, cancel_saleRecord_account_dict):
+        self.cancel_saleRecord_account_dict = cancel_saleRecord_account_dict
