@@ -1,11 +1,13 @@
 import pandas as pd
 from QueryInfo import QueryInfo
+from SaleRecord import SaleRecord
 
 class QuerySaleRecordHelper():
     df_all_user_saleReport = pd.DataFrame()
     df_all_user_profileReport = pd.DataFrame()
     df_all_user_productReport = pd.DataFrame()
     queryInfoDict={}
+    saleRecord_account_dict = {}
 
     def __init__(self):
         return
@@ -43,10 +45,25 @@ class QuerySaleRecordHelper():
         self.df_all_user_saleReport = pd.concat(frames)
         self.initProductReport(queryInfo)
         frames = [self.df_all_user_profileReport, queryInfo.getProfileReportDataFrame()]
-        self.df_all_user_profileReport = pd.concat(frames)
-        
+        self.df_all_user_profileReport = pd.concat(frames)    
+        self.queryInfoDict.update({queryInfo.account: queryInfo})
+        self.updateSaleRecord_account_dict(queryInfo.getSaleReportDataFrame())
 
-        self.queryInfoDict.update({queryInfo.account.lower(): queryInfo})
+    def updateSaleRecord_account_dict(self, dataFrame):
+        for col, row in dataFrame.iterrows():            
+            saleRecord = SaleRecord(row)
+            saleRecordList = None
+            if saleRecord.account in self.saleRecord_account_dict:
+                saleRecordList = self.saleRecord_account_dict[saleRecord.account]                
+            else:
+                saleRecordList = []   
+            
+            saleRecordList.append(saleRecord)
+            self.saleRecord_account_dict.update({saleRecord.account:saleRecordList})
+
+
+    def getSaleRecordListByAccount(self, account):
+        return self.saleRecord_account_dict[account]
 
     def writeExcel(self):
         self.df_all_user_saleReport = self.reindexSaleReportDataFrame(self.df_all_user_saleReport)
