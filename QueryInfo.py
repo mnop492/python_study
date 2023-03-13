@@ -13,7 +13,7 @@ class QueryInfo():
         self.token = token
 
     def __init__(self, account):
-        self.account = account
+        self.account = account.lower()
 
     def getSaleReportDataFrame(self):
         meta_col = ["actualSellingDate","approveStatus","headerID","storeId","storeName"]
