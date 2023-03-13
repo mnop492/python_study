@@ -90,13 +90,22 @@ def insertSaleRecordByAccount(login_dict, insertSaleRecordHelper, querySaleRecor
                 isDuplicate = True
                 break
         if (not isDuplicate):
-            webConnectionHelper.insertSaleRecord(queryInfo.profile,companyId, saleRecord)
-            sleeptime = 3 + random.randint(1,4)
-            # sleeptime = 5 + random.randint(1,4)
-            # print('Wait', sleeptime, 'seconds to get next account sale report!')
-            # time.sleep(sleeptime)
-            print("Wait", sleeptime, "seconds to insert next record.")
-            time.sleep(sleeptime)
+            sleeptime = 5
+            while True :
+                try:
+                    webConnectionHelper.insertSaleRecord(queryInfo.profile,companyId, saleRecord)
+                    insert_sleeptime = 3 + random.randint(1,4)
+                    # sleeptime = 5 + random.randint(1,4)
+                    # print('Wait', sleeptime, 'seconds to get next account sale report!')
+                    # time.sleep(sleeptime)
+                    print("Wait", insert_sleeptime, "seconds to insert next record.")
+                    time.sleep(insert_sleeptime)
+                except Exception as err:              
+                    print(queryInfo.account, 'fail to insert record.', 'Wait', sleeptime, 'seconds to retry!')   
+                    time.sleep(sleeptime)
+                    sleeptime += 5
+                    continue   
+                break            
         else:
             print(saleRecord.account, saleRecord.actualSellingDate, 'is duplicated, fail to insert.')   
 
@@ -139,9 +148,19 @@ def cancelSaleRecordByAccountAndHeaderID(login_dict, cancelSaleRecordHelper):
             sleeptime += 5
             continue   
         break
-    cancelSaleRecordList = cancelSaleRecordHelper.cancel_saleRecord_account_dict[login_dict['account'].lower()]
-    for headerID in cancelSaleRecordList:
-        webConnectionHelper.cancelSaleRecord(queryInfo.profile, headerID)
+
+    sleeptime = 5
+    while True :
+        try:
+            cancelSaleRecordList = cancelSaleRecordHelper.cancel_saleRecord_account_dict[login_dict['account'].lower()]
+            for headerID in cancelSaleRecordList:
+                webConnectionHelper.cancelSaleRecord(queryInfo.profile, headerID)            
+        except Exception as err:              
+            print(queryInfo.account, 'fail to cancel sale record.', 'Wait', sleeptime, 'seconds to retry!')   
+            time.sleep(sleeptime)  
+            sleeptime += 5
+            continue   
+        break
     return queryInfo
 
 def cancel(arg):     
@@ -172,31 +191,24 @@ def pushSaleRecordByAccount(login_dict, pushSaleRecordHelper, querySaleRecordHel
     querySaleRecordHelper.initProductReport(queryInfo)
     if not insertSaleRecordHelper.productRecord_df_flag :
         insertSaleRecordHelper.initProductRecord_df(querySaleRecordHelper.df_all_user_productReport)
-    saleRecordList = insertSaleRecordHelper.getTranslatedSaleRecordByAccount(login_dict['account'], queryInfo.profile)
-    for saleRecord in saleRecordList:
-        df = queryInfo.getSaleReportDataFrame()
-        isDuplicate = False
-        for col, row in df.iterrows():            
-            if row['approveStatus'] == 'Approved' and saleRecord.getSaleRecordID() == row['account'].lower() + row['actualSellingDate']:
-                isDuplicate = True
-                break
-        if (not isDuplicate):
-            webConnectionHelper.insertSaleRecord(queryInfo.profile,companyId, saleRecord)
-            sleeptime = 3 + random.randint(1,4)
-            # sleeptime = 5 + random.randint(1,4)
-            # print('Wait', sleeptime, 'seconds to get next account sale report!')
-            # time.sleep(sleeptime)
-            print("Wait", sleeptime, "seconds to insert next record.")
-            time.sleep(sleeptime)
-        else:
-            print(saleRecord.account, saleRecord.actualSellingDate, 'is duplicated, fail to insert.')
+    querySaleRecordHelper.updateQueryInfoList(queryInfo)
+    querySaleRecordList = querySaleRecordHelper.getSaleRecordListByAccount(queryInfo.account)
+
+    if (pushSaleRecordHelper.diffSaleRecordByAccount(queryInfo.account, querySaleRecordList)):
+        cancelSaleRecordHelper.updateDict()
+        pushSaleRecordHelper.updateDict()
+
+    cancelSaleRecordByAccountAndHeaderID(login_dict, cancelSaleRecordHelper)
+    insertSaleRecordByAccount(login_dict, insertSaleRecordHelper, querySaleRecordHelper)
     return queryInfo
 
 def push():     
     pushSaleRecordHelper = PushSaleRecordHelper('All_USER_PUSH.xlsx')    
     querySaleRecordHelper = QuerySaleRecordHelper()
     insertSaleRecordHelper = InsertSaleRecordHelper()
+    insertSaleRecordHelper.initByDict(pushSaleRecordHelper.insert_saleRecord_account_dict)
     cancelSaleRecordHelper = CancelSaleRecordHelper()
+    cancelSaleRecordHelper.initByDict(pushSaleRecordHelper.cancel_saleRecord_account_dict)
 
     for account in pushSaleRecordHelper.push_saleRecord_account_dict: 
 
